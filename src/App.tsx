@@ -80,7 +80,7 @@ export default function App() {
   const appState = useAppLogic();
   const { userType, setUserType, currUser, setCurrUser, db, setDb, activeTab, setActiveTab, adminSubTab, setAdminSubTab, searchQuery, setSearchQuery, dbLoading, setDbLoading, errorMessage, setErrorMessage, loginUsername, setLoginUsername, loginPassword, setLoginPassword, authTab, setAuthTab, regName, setRegName, regMobile, setRegMobile, regClass, setRegClass, regBatch, setRegBatch, regRoll, setRegRoll, regPassword, setRegPassword, regSuccessMsg, setRegSuccessMsg, activeExam, setActiveExam, examAnswers, setExamAnswers, examTimer, setExamTimer, timerRef, showBottomTabs, setShowBottomTabs, mainTouchStartPos, handleMainTouchStart, handleMainTouchEnd, doubtOpen, setDoubtOpen, mobileMenuOpen, setMobileMenuOpen, examMobileTab, setExamMobileTab, showCreateTest, setShowCreateTest, testFormTitle, setTestFormTitle, testFormType, setTestFormType, testFormClass, setTestFormClass, testFormSubject, setTestFormSubject, testFormDate, setTestFormDate, testFormStart, setTestFormStart, testFormEnd, setTestFormEnd, testFormDuration, setTestFormDuration, testFormNumQuestions, setTestFormNumQuestions, testFormKeys, setTestFormKeys, testFormPdfName, setTestFormPdfName, testFormPdfData, setTestFormPdfData, testFormImages, setTestFormImages, getSubjectsForClass, selectedStudent, setSelectedStudent, selectedAnalysis, setSelectedAnalysis, showDirectAddStudent, setShowDirectAddStudent, showDemoCreds, setShowDemoCreds, syncDB, syncOfflineAttempts, handleLoginSubmit, handleRegisterSubmit, handleApproveStudent, handleRejectStudent, handleToggleBlock, handleResetPassword, handleDeleteStudent, handleDirectAddStudent, handleCreateTestSubmit, handleDeleteTest, startExamSession, handleSelectOption, handleClearOption, handleManualSubmit, handleAutoSubmit, handleRecalculateRanks, handleMarkAllRead, handleLogout, renderMiniChart, secondsToHms, getLiveTestState, showCelebration, setShowCelebration, celebrationData, setCelebrationData, isAiChatOpen, setIsAiChatOpen } = appState;
 
-  const [examViewMode, setExamViewMode] = useState<'questions' | 'omr'>('questions');
+  const [examViewMode, setExamViewMode] = useState<'questions' | 'omr' | 'split'>('split');
 
   // native Android hardware back button handler
   useEffect(() => {
@@ -230,7 +230,7 @@ export default function App() {
 
           {/* Premium Mobile Switcher Tabs for viewport Optimization */}
           <div className="px-3 pb-2.5 flex bg-slate-900 border-t border-slate-800/40 w-full justify-center">
-            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full max-w-sm shrink-0 select-none">
+            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full max-w-md shrink-0 select-none">
               <button 
                 type="button"
                 onClick={() => setExamViewMode('questions')}
@@ -239,6 +239,15 @@ export default function App() {
                 }`}
               >
                 1. Questions
+              </button>
+              <button 
+                type="button"
+                onClick={() => setExamViewMode('split')}
+                className={`flex-1 text-center py-1.5 text-[10px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  examViewMode === 'split' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Split View
               </button>
               <button 
                 type="button"
@@ -257,8 +266,8 @@ export default function App() {
         <main className="flex-1 flex flex-col overflow-hidden h-[calc(100vh-130px)]">
           {/* Section A: Visualizer (High-quality Question images or PDF fallback) */}
           <div className={`
-            border-b border-slate-900 overflow-hidden flex flex-col
-            ${examViewMode === 'questions' ? 'flex-1 h-full' : 'hidden'}
+            border-b-4 border-slate-700/50 overflow-hidden flex flex-col relative
+            ${examViewMode === 'questions' ? 'flex-1 h-full' : examViewMode === 'split' ? 'h-[70%] shrink-0' : 'hidden'}
           `}>
             {activeExam.questionImages && activeExam.questionImages.length > 0 ? (
               <QuestionImagesViewer 
@@ -272,12 +281,17 @@ export default function App() {
                 testTitle={activeExam.title}
               />
             )}
+            {examViewMode === 'split' && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500/20 shadow-md flex justify-center items-center">
+                <div className="w-12 h-1 rounded-full bg-blue-500/50" />
+              </div>
+            )}
           </div>
 
           {/* Section B: Interactive OMR Sheet */}
           <div className={`
             p-3 sm:p-5 bg-slate-900/15 overflow-y-auto flex flex-col justify-between
-            ${examViewMode === 'omr' ? 'flex-1 h-full' : 'hidden'}
+            ${examViewMode === 'omr' ? 'flex-1 h-full' : examViewMode === 'split' ? 'h-[30%] shrink-0' : 'hidden'}
           `}>
             <OMRSheet 
               answers={examAnswers}
@@ -567,7 +581,7 @@ export default function App() {
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
                 <h1 className="text-base font-extrabold tracking-tight text-slate-900 mt-0.5 flex items-center gap-2">
-                  EZ PREMIER PLATFORM <span className="text-[10px] text-blue-600 font-mono font-bold">Class 9th-12th Coaching</span>
+                  <EzTestIcon size="sm" /> EZ PREMIER PLATFORM <span className="text-[10px] text-blue-600 font-mono font-bold">Class 9th-12th Coaching</span>
                 </h1>
               </div>
 

@@ -359,7 +359,7 @@ export default function Modals() {
             </button>
 
             <h3 className="text-base font-extrabold tracking-tight text-slate-100 mb-5 pb-3 border-b border-slate-800">
-              Publish New Institure Exam Form
+              Publish New Institute Exam Form
             </h3>
 
             <div className="space-y-4">
@@ -424,25 +424,36 @@ export default function Modals() {
                     type="file"
                     multiple
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const files = Array.from(e.target.files || []);
                       if (files.length === 0) return;
                       
-                      const readers = files.map((file: File) => {
-                        return new Promise<string>((resolve) => {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            if (event.target?.result) {
-                              resolve(event.target.result as string);
+                      const resizeImage = (file: File) => new Promise<string>((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const img = new Image();
+                          img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let { width, height } = img;
+                            const MAX_DIM = 1000;
+                            if (width > height && width > MAX_DIM) {
+                              height *= MAX_DIM / width; width = MAX_DIM;
+                            } else if (height > MAX_DIM) {
+                              width *= MAX_DIM / height; height = MAX_DIM;
                             }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
                           };
-                          reader.readAsDataURL(file);
-                        });
+                          if (event.target?.result) img.src = event.target.result as string;
+                        };
+                        reader.readAsDataURL(file);
                       });
 
-                      Promise.all(readers).then(results => {
-                        setTestFormImages(prev => [...prev, ...results]);
-                      });
+                      const results = await Promise.all(files.map(resizeImage));
+                      setTestFormImages(prev => [...prev, ...results]);
                     }}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />

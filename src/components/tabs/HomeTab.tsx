@@ -4,6 +4,7 @@ import {
   BookOpen, Users, Clock, Award, ChevronRight, Layers, Search, Plus, Sparkles, Bell, ShieldAlert, CheckCircle, LogOut, ArrowRight, Lock, User, BookOpenCheck, ClipboardList, Flame, LineChart, Brain, History, X, Menu, FileCheck, AlertCircle, FileText, Image as ImageIcon, Upload, Bot
 } from 'lucide-react';
 import { useAppContext } from '../../AppContext';
+import EzTestIcon from '../common/EzTestIcon';
 
 export default function HomeTab() {
   const { userType, setUserType, currUser, setCurrUser, db, setDb, activeTab, setActiveTab, adminSubTab, setAdminSubTab, searchQuery, setSearchQuery, dbLoading, setDbLoading, errorMessage, setErrorMessage, loginUsername, setLoginUsername, loginPassword, setLoginPassword, authTab, setAuthTab, regName, setRegName, regMobile, setRegMobile, regClass, setRegClass, regBatch, setRegBatch, regRoll, setRegRoll, regPassword, setRegPassword, regSuccessMsg, setRegSuccessMsg, activeExam, setActiveExam, examAnswers, setExamAnswers, examTimer, setExamTimer, timerRef, showBottomTabs, setShowBottomTabs, mainTouchStartPos, handleMainTouchStart, handleMainTouchEnd, doubtOpen, setDoubtOpen, mobileMenuOpen, setMobileMenuOpen, examMobileTab, setExamMobileTab, showCreateTest, setShowCreateTest, testFormTitle, setTestFormTitle, testFormType, setTestFormType, testFormClass, setTestFormClass, testFormSubject, setTestFormSubject, testFormDate, setTestFormDate, testFormStart, setTestFormStart, testFormEnd, setTestFormEnd, testFormDuration, setTestFormDuration, testFormNumQuestions, setTestFormNumQuestions, testFormKeys, setTestFormKeys, testFormPdfName, setTestFormPdfName, testFormPdfData, setTestFormPdfData, testFormImages, setTestFormImages, getSubjectsForClass, selectedStudent, setSelectedStudent, selectedAnalysis, setSelectedAnalysis, showDirectAddStudent, setShowDirectAddStudent, showDemoCreds, setShowDemoCreds, syncDB, syncOfflineAttempts, handleLoginSubmit, handleRegisterSubmit, handleApproveStudent, handleRejectStudent, handleToggleBlock, handleResetPassword, handleDeleteStudent, handleDirectAddStudent, handleCreateTestSubmit, handleDeleteTest, startExamSession, handleSelectOption, handleClearOption, handleManualSubmit, handleAutoSubmit, handleRecalculateRanks, handleMarkAllRead, handleLogout, renderMiniChart, secondsToHms, getLiveTestState, setIsAiChatOpen } = useAppContext();
@@ -20,10 +21,15 @@ export default function HomeTab() {
                 
                 {/* Header overview */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h2 className="text-xl font-extrabold tracking-tight text-slate-800">Welcome back, {currUser.name}</h2>
-                    <p className="text-xs text-slate-500 mt-1 font-sans">EZ TEST Evaluation platform, providing real-time assessments grading.</p>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <div className="bg-slate-100 p-2 rounded-2xl hidden sm:block">
+                        <EzTestIcon size="md" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-extrabold tracking-tight text-slate-800">Welcome back, {currUser.name}</h2>
+                        <p className="text-xs text-slate-500 mt-1 font-sans"><span className="font-black text-slate-700 font-mono">EZ TEST</span> Evaluation platform, providing real-time assessments grading.</p>
+                      </div>
+                    </div>
                   
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-500 font-mono font-medium">Current Live Time: {new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</span>
@@ -370,17 +376,31 @@ export default function HomeTab() {
                 {userType === 'admin' && (
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                      <div>
-                        <h2 className="text-xl font-black tracking-tight text-slate-900 border-b border-slate-200 pb-2 mb-2 inline-block">Admin Dashboard</h2>
-                        <p className="text-xs text-slate-500 font-mono">Overview of platform metrics and rankings.</p>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-slate-100 p-2 rounded-2xl hidden sm:block">
+                          <EzTestIcon size="md" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black tracking-tight text-slate-900 border-b border-slate-200 pb-2 mb-2 inline-block">Admin Dashboard</h2>
+                          <p className="text-xs text-slate-500 font-mono">Overview of platform metrics and rankings.</p>
+                        </div>
                       </div>
-                      <button
-                        onClick={handleRecalculateRanks}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all focus:outline-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 dark:border dark:border-slate-700 border-none"
-                      >
-                        <History className="h-4 w-4" />
-                        Recalculate All Ranks
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setTestFormType('live'); setShowCreateTest(true); }}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all focus:outline-none bg-indigo-600 hover:bg-indigo-700 text-white border-none"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Publish Exam
+                        </button>
+                        <button
+                          onClick={handleRecalculateRanks}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all focus:outline-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 dark:border dark:border-slate-700 border-none"
+                        >
+                          <History className="h-4 w-4" />
+                          Recalculate All Ranks
+                        </button>
+                      </div>
                     </div>
 
                     {/* Admin summary metrics */}

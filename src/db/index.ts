@@ -1,15 +1,12 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import * as schema from './schema.ts';
+import * as schema from './schema';
 
 const { Pool } = pg;
 
 export const createPool = () => {
   return new Pool({
-    host: process.env.SQL_HOST,
-    user: process.env.SQL_USER,
-    password: process.env.SQL_PASSWORD,
-    database: process.env.SQL_DB_NAME,
+    connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_6vKptoJnX3dB@ep-late-truth-aodqz064-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
     connectionTimeoutMillis: 15000,
   });
 };
@@ -21,3 +18,4 @@ pool.on('error', (err) => {
 });
 
 export const db = drizzle(pool, { schema });
+
