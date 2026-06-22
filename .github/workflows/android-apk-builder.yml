@@ -27,7 +27,12 @@ jobs:
           cache: 'npm'
 
       - name: Install Web Dependencies
-        run: npm ci
+        run: |
+          npm config set fetch-retries 10
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set maxsockets 20
+          npm ci || npm install --no-audit --no-fund
 
       - name: Build Web Production Bundle
         run: npm run build
