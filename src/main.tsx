@@ -1,5 +1,6 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
@@ -11,9 +12,7 @@ Object.defineProperty(window, 'fetch', {
   writable: true,
   value: async (...args: Parameters<typeof originalFetch>) => {
     if (typeof args[0] === 'string' && args[0].startsWith('/api/')) {
-      const isCapacitorNative = !!(window as any).Capacitor?.isNative;
-      
-      if (isCapacitorNative) {
+      if (Capacitor.isNativePlatform()) {
          const apiBase = (import.meta as any).env.VITE_API_BASE || 'https://ais-pre-2gbdiemrqbqhx6efzwgpgf-978163732318.asia-southeast1.run.app';
          args[0] = apiBase + args[0];
       }
