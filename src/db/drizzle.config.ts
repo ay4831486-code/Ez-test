@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const dbUrl = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_6vKptoJnX3dB@ep-late-truth-aodqz064-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+const dbUrl = process.env.SUPABASE_DATABASE_URL || "postgresql://postgres:Aditya%409942180655@db.lvdxuaoafxesoqlmywap.supabase.co:5432/postgres";
 
 export default defineConfig({
   schema: "./src/db/schema.ts",

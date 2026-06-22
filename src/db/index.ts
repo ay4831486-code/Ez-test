@@ -6,7 +6,7 @@ const { Pool } = pg;
 
 export const createPool = () => {
   return new Pool({
-    connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_6vKptoJnX3dB@ep-late-truth-aodqz064-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+    connectionString: process.env.SUPABASE_DATABASE_URL || "postgresql://postgres:Aditya%409942180655@db.lvdxuaoafxesoqlmywap.supabase.co:5432/postgres",
     connectionTimeoutMillis: 15000,
   });
 };

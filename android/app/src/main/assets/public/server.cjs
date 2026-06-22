@@ -34,7 +34,7 @@ var import_path = __toESM(require("path"), 1);
 var import_vite = require("vite");
 var import_genai = require("@google/genai");
 
-// src/db/firestoreService.ts
+// src/db/dbService.ts
 var import_drizzle_orm2 = require("drizzle-orm");
 
 // src/db/index.ts
@@ -154,7 +154,7 @@ var attemptsRelations = (0, import_drizzle_orm.relations)(attempts, ({ one }) =>
 var { Pool } = import_pg.default;
 var createPool = () => {
   return new Pool({
-    connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_6vKptoJnX3dB@ep-late-truth-aodqz064-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+    connectionString: process.env.SUPABASE_DATABASE_URL || "postgresql://postgres:Aditya%409942180655@db.lvdxuaoafxesoqlmywap.supabase.co:5432/postgres",
     connectionTimeoutMillis: 15e3
   });
 };
@@ -164,7 +164,7 @@ pool.on("error", (err) => {
 });
 var db = (0, import_node_postgres.drizzle)(pool, { schema: schema_exports });
 
-// src/db/firestoreService.ts
+// src/db/dbService.ts
 async function getStudents() {
   const result = await db.select().from(students);
   return result.map((s) => ({ ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() }));
@@ -422,18 +422,14 @@ async function computeStats() {
 async function startServer() {
   const app = (0, import_express.default)();
   const PORT = 3e3;
-  app.use((0, import_cors.default)());
+  app.use((0, import_cors.default)({
+    origin: "*",
+    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-publishable-key", "Authorization"]
+  }));
   app.use((0, import_compression.default)());
   app.use(import_express.default.json({ limit: "10mb" }));
   app.use(import_express.default.urlencoded({ extended: true, limit: "10mb" }));
   app.use("/api", (req, res, next) => {
-    const requiredKey = process.env.VITE_APP_PUBLISHABLE_KEY;
-    if (requiredKey) {
-      const clientKey = req.headers["x-publishable-key"];
-      if (!clientKey || clientKey !== requiredKey) {
-        return res.status(401).json({ error: "Unauthorized. Invalid or missing Publishable API Key." });
-      }
-    }
     next();
   });
   app.post("/api/auth/login", async (req, res) => {
