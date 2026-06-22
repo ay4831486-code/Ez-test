@@ -9,6 +9,7 @@ export default function HomeTab() {
   const { userType, setUserType, currUser, setCurrUser, db, setDb, activeTab, setActiveTab, adminSubTab, setAdminSubTab, searchQuery, setSearchQuery, dbLoading, setDbLoading, errorMessage, setErrorMessage, loginUsername, setLoginUsername, loginPassword, setLoginPassword, authTab, setAuthTab, regName, setRegName, regMobile, setRegMobile, regClass, setRegClass, regBatch, setRegBatch, regRoll, setRegRoll, regPassword, setRegPassword, regSuccessMsg, setRegSuccessMsg, activeExam, setActiveExam, examAnswers, setExamAnswers, examTimer, setExamTimer, timerRef, showBottomTabs, setShowBottomTabs, mainTouchStartPos, handleMainTouchStart, handleMainTouchEnd, doubtOpen, setDoubtOpen, mobileMenuOpen, setMobileMenuOpen, examMobileTab, setExamMobileTab, showCreateTest, setShowCreateTest, testFormTitle, setTestFormTitle, testFormType, setTestFormType, testFormClass, setTestFormClass, testFormSubject, setTestFormSubject, testFormDate, setTestFormDate, testFormStart, setTestFormStart, testFormEnd, setTestFormEnd, testFormDuration, setTestFormDuration, testFormNumQuestions, setTestFormNumQuestions, testFormKeys, setTestFormKeys, testFormPdfName, setTestFormPdfName, testFormPdfData, setTestFormPdfData, testFormImages, setTestFormImages, getSubjectsForClass, selectedStudent, setSelectedStudent, selectedAnalysis, setSelectedAnalysis, showDirectAddStudent, setShowDirectAddStudent, showDemoCreds, setShowDemoCreds, syncDB, syncOfflineAttempts, handleLoginSubmit, handleRegisterSubmit, handleApproveStudent, handleRejectStudent, handleToggleBlock, handleResetPassword, handleDeleteStudent, handleDirectAddStudent, handleCreateTestSubmit, handleDeleteTest, startExamSession, handleSelectOption, handleClearOption, handleManualSubmit, handleAutoSubmit, handleRecalculateRanks, handleMarkAllRead, handleLogout, renderMiniChart, secondsToHms, getLiveTestState, setIsAiChatOpen } = useAppContext();
   const [selectedClassFilter, setSelectedClassFilter] = React.useState<string>('All');
   const [topPerformersClassFilter, setTopPerformersClassFilter] = React.useState<string>('All');
+  const [homeLeaderboardMode, setHomeLeaderboardMode] = React.useState<'live' | 'practice'>('live');
   const studentAttempts = currUser ? db.attempts.filter((a: any) => a.studentId === currUser.studentId && a.status === 'submitted') : [];
   const maxScore = studentAttempts.length > 0 ? Math.max(...studentAttempts.map((a: any) => a.score)) : 1;
   const padding = 20; const height = 80; const width = 300;
@@ -39,27 +40,54 @@ export default function HomeTab() {
                     <div className="lg:col-span-2 space-y-6">
                       
                       {/* Metric cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {/* Overall Rank Widget */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {/* Best Live Rank Widget */}
                         <div className="bg-white border border-slate-200/80 p-5 rounded-3xl relative overflow-hidden shadow-sm text-slate-800 font-sans">
-                          <div className="absolute top-3 right-3 p-1.5 bg-indigo-50 border border-indigo-100 rounded-lg">
-                            <Award className="h-4 w-4 text-indigo-600" />
+                          <div className="absolute top-3 right-3 p-1.5 bg-red-50 border border-red-100 rounded-lg">
+                            <Award className="h-4 w-4 text-red-500" />
                           </div>
-                          <p className="text-[9px] uppercase tracking-wider text-slate-450 font-mono font-bold">Best Rank</p>
-                          <h3 className="text-2xl font-black text-indigo-600 mt-1">
-                            {db.attempts.filter(a => a.studentId === currUser.studentId && a.rank).length > 0
-                              ? `#${Math.min(...db.attempts.filter(a => a.studentId === currUser.studentId && a.rank).map(a => a.rank || 99))}`
-                              : 'NA'}
+                          <p className="text-[9px] uppercase tracking-wider text-slate-450 font-mono font-bold">Best Live Rank</p>
+                          <h3 className="text-2xl font-black text-slate-900 mt-1">
+                            {(() => {
+                              const liveAttemptsObj = db.attempts.filter(a => {
+                                if (a.studentId !== currUser.studentId || !a.rank) return false;
+                                const test = db.tests.find(t => t.id === a.testId);
+                                return test && test.type === 'live';
+                              });
+                              return liveAttemptsObj.length > 0
+                                ? `#${Math.min(...liveAttemptsObj.map(a => a.rank || 99))}`
+                                : 'NA';
+                            })()}
+                          </h3>
+                        </div>
+
+                        {/* Best Practice Rank Widget */}
+                        <div className="bg-white border border-slate-200/80 p-5 rounded-3xl relative overflow-hidden shadow-sm text-slate-800 font-sans">
+                          <div className="absolute top-3 right-3 p-1.5 bg-emerald-50 border border-emerald-100 rounded-lg">
+                            <Award className="h-4 w-4 text-emerald-500" />
+                          </div>
+                          <p className="text-[9px] uppercase tracking-wider text-slate-450 font-mono font-bold">Best Practice Rank</p>
+                          <h3 className="text-2xl font-black text-slate-900 mt-1">
+                            {(() => {
+                              const practiceAttemptsObj = db.attempts.filter(a => {
+                                if (a.studentId !== currUser.studentId || !a.rank) return false;
+                                const test = db.tests.find(t => t.id === a.testId);
+                                return test && test.type === 'practice';
+                              });
+                              return practiceAttemptsObj.length > 0
+                                ? `#${Math.min(...practiceAttemptsObj.map(a => a.rank || 99))}`
+                                : 'NA';
+                            })()}
                           </h3>
                         </div>
 
                         {/* Accuracy metric */}
                         <div className="bg-white border border-slate-200/85 p-5 rounded-3xl relative overflow-hidden shadow-sm text-slate-800 font-sans">
-                          <div className="absolute top-3 right-3 p-1.5 bg-emerald-50 border border-emerald-100 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-emerald-600" />
+                          <div className="absolute top-3 right-3 p-1.5 bg-indigo-50 border border-indigo-100 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-indigo-500" />
                           </div>
                           <p className="text-[9px] uppercase tracking-wider text-slate-455 font-mono font-bold">Accuracy</p>
-                          <h3 className="text-2xl font-black text-emerald-600 mt-1">
+                          <h3 className="text-2xl font-black text-indigo-650 mt-1">
                             {(() => {
                               const studentAttempts = db.attempts.filter(a => a.studentId === currUser.studentId && a.status === 'submitted');
                               if (studentAttempts.length === 0) return '0%';
@@ -72,7 +100,7 @@ export default function HomeTab() {
                         {/* Tests completed */}
                         <div className="bg-white border border-slate-200/80 p-5 rounded-3xl relative overflow-hidden shadow-sm text-slate-800 font-sans">
                           <div className="absolute top-3 right-3 p-1.5 bg-pink-50 border border-pink-100 rounded-lg">
-                            <BookOpenCheck className="h-4 w-4 text-pink-600" />
+                            <BookOpenCheck className="h-4 w-4 text-pink-500" />
                           </div>
                           <p className="text-[9px] uppercase tracking-wider text-slate-450 font-mono font-bold">Completed</p>
                           <h3 className="text-2xl font-black text-pink-600 mt-1">
@@ -124,10 +152,47 @@ export default function HomeTab() {
 
                       {/* Leaderboard Widget */}
                       {(() => {
-                        const submittedAttempts = db.attempts.filter(a => a.status === 'submitted' && a.submitTime);
-                        if (submittedAttempts.length === 0) return null;
+                        const submittedAttemptsAll = db.attempts.filter(a => a.status === 'submitted' && a.submitTime);
+                        const submittedAttempts = submittedAttemptsAll.filter(a => {
+                          const test = db.tests.find(t => t.id === a.testId);
+                          return test && test.type === homeLeaderboardMode;
+                        });
                         
-                        // Find the latest test taken
+                        if (submittedAttempts.length === 0) {
+                          return (
+                            <div className="bg-white border border-slate-200/80 p-5 rounded-3xl relative overflow-hidden shadow-sm text-slate-800 flex flex-col h-full min-h-[280px]">
+                              <div className="flex items-center justify-between gap-3 mb-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1.5 bg-amber-50 border border-amber-100 rounded-lg">
+                                    <Award className="h-4 w-4 text-amber-500" />
+                                  </div>
+                                  <h4 className="text-sm font-bold tracking-tight text-slate-700">Leaderboard</h4>
+                                </div>
+                                <div className="flex bg-slate-100 p-0.5 rounded-lg text-[10px]">
+                                  <button
+                                    onClick={() => setHomeLeaderboardMode('live')}
+                                    className={`px-2 py-1 rounded font-bold transition cursor-pointer ${homeLeaderboardMode === 'live' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                    Live
+                                  </button>
+                                  <button
+                                    onClick={() => setHomeLeaderboardMode('practice')}
+                                    className={`px-2 py-1 rounded font-bold transition cursor-pointer ${homeLeaderboardMode === 'practice' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                    Practice
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex-1 flex flex-col items-center justify-center py-6 text-center text-slate-400">
+                                <Award className="h-8 w-8 text-slate-350 stroke-1 mb-2 animate-pulse" />
+                                <p className="text-xs font-semibold italic">No attempts found</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">No student has submitted any {homeLeaderboardMode} test yet.</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        // Find the latest test taken in that mode
                         const sortedAttemptsByTime = [...submittedAttempts].sort((a, b) => new Date(b.submitTime || 0).getTime() - new Date(a.submitTime || 0).getTime());
                         const latestTestId = sortedAttemptsByTime[0].testId;
                         
@@ -163,18 +228,34 @@ export default function HomeTab() {
                                 </div>
                                 <h4 className="text-sm font-bold tracking-tight text-slate-700">Leaderboard</h4>
                               </div>
-                              <select
-                                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-800 font-sans focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                value={topPerformersClassFilter}
-                                onChange={(e) => setTopPerformersClassFilter(e.target.value)}
-                              >
-                                <option value="All">All Classes</option>
-                                <option value="Class 9">Class 9</option>
-                                <option value="Class 10">Class 10</option>
-                                <option value="Class 11">Class 11</option>
-                                <option value="Class 12">Class 12</option>
-                                <option value="Unassigned">Unassigned</option>
-                              </select>
+                              <div className="flex items-center gap-2">
+                                <div className="flex bg-slate-100 p-0.5 rounded-lg text-[10px]">
+                                  <button
+                                    onClick={() => setHomeLeaderboardMode('live')}
+                                    className={`px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${homeLeaderboardMode === 'live' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                    Live
+                                  </button>
+                                  <button
+                                    onClick={() => setHomeLeaderboardMode('practice')}
+                                    className={`px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${homeLeaderboardMode === 'practice' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                    Practice
+                                  </button>
+                                </div>
+                                <select
+                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-800 font-sans focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  value={topPerformersClassFilter}
+                                  onChange={(e) => setTopPerformersClassFilter(e.target.value)}
+                                >
+                                  <option value="All">All</option>
+                                  <option value="Class 9">Class 9</option>
+                                  <option value="Class 10">Class 10</option>
+                                  <option value="Class 11">Class 11</option>
+                                  <option value="Class 12">Class 12</option>
+                                  <option value="Unassigned">Unassigned</option>
+                                </select>
+                              </div>
                             </div>
                             <p className="text-[10px] text-slate-500 mb-3 truncate">Based on: <span className="font-semibold text-slate-600 truncate">{latestTest?.title || 'Recent Test'}</span></p>
                             <div className="space-y-3 flex-1 flex flex-col justify-start">
@@ -201,7 +282,7 @@ export default function HomeTab() {
                                       <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{performer.studentName}</span>
                                     </div>
                                   </div>
-                                  <div className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                                  <div className="text-xs font-mono font-bold text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded-full">
                                     {performer.score} pts
                                   </div>
                                 </div>

@@ -7,6 +7,10 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build-apk:
     name: Build Android Debug APK
@@ -19,7 +23,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Web Dependencies
@@ -28,8 +32,13 @@ jobs:
       - name: Build Web Production Bundle
         run: npm run build
 
-      - name: Add Android Platform
-        run: npx cap add android
+      - name: Add Android Platform if missing
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          else
+            echo "Android platform directory already exists. Skipping cap add."
+          fi
 
       - name: Sync Capacitor Android Project
         run: npx cap sync android
