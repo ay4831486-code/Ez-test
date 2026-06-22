@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global safety net catch-all: reject by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper: is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: is verifying their own document (Owner-Based)
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Unique ID format check
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 2. Students Collection Rules
+    match /students/{studentId} {
+      allow get: if isSignedIn() && (isOwner(studentId) || isOwner(resource.data.uid));
+      allow list: if false; // Deny query scraping
+      allow create: if isSignedIn() && isValidId(studentId) && request.resource.data.id == studentId;
+      allow update: if isSignedIn() && (isOwner(studentId) || isOwner(resource.data.uid)) && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLoginAt', 'streakCount'])
+      );
+      allow delete: if false; // Only admin can delete via Admin SDK
+    }
+
+    // 3. Tests Collection Rules
+    match /tests/{testId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow write: if false; // Tests should only be written from the trusted server side
+    }
+
+    // 4. Attempts Collection Rules
+    match /attempts/{attemptId} {
+      allow get: if isSignedIn() && (resource == null || resource.data.studentId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.studentId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(attemptId) && request.resource.data.studentId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.studentId == request.auth.uid && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submitTime', 'score', 'correctAnswers', 'wrongAnswers', 'accuracy'])
+      );
+      allow delete: if false;
+    }
+
+    // 5. Notifications Collection Rules
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && (resource.data.recipientId == 'all' || resource.data.recipientId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.recipientId == 'all' || resource.data.recipientId == request.auth.uid);
+      allow write: if false; // Notifications are written strictly server-side
+    }
+
+    // 6. Activities Collection Rules
+    match /activities/{activityId} {
+      allow read: if false; // System logs restricted
+      allow write: if false; // Admin activity logs written strictly server-side
+    }
+
+    // 7. Admin Settings
+    match /admin_settings/{configId} {
+      allow read, write: if false; // Restricted to server-side only
+    }
+  }
+}

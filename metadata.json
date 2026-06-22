@@ -1,0 +1,8 @@
+{
+  "name": "Remix: EZ TEST",
+  "description": "Coaching Institute Testing \u0026 Management Platform, featuring Admin test scheduling, OMR evaluation, Leaderboards, real-time analytics, and Gemini AI chatbot integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
