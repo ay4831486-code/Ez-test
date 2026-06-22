@@ -426,6 +426,16 @@ async function startServer() {
   app.use((0, import_compression.default)());
   app.use(import_express.default.json({ limit: "10mb" }));
   app.use(import_express.default.urlencoded({ extended: true, limit: "10mb" }));
+  app.use("/api", (req, res, next) => {
+    const requiredKey = process.env.VITE_APP_PUBLISHABLE_KEY;
+    if (requiredKey) {
+      const clientKey = req.headers["x-publishable-key"];
+      if (!clientKey || clientKey !== requiredKey) {
+        return res.status(401).json({ error: "Unauthorized. Invalid or missing Publishable API Key." });
+      }
+    }
+    next();
+  });
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;

@@ -128,6 +128,19 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+  // Independent App Security Middleware
+  app.use("/api", (req, res, next) => {
+    // Only verify app publishable key if it's set in the environment
+    const requiredKey = process.env.VITE_APP_PUBLISHABLE_KEY;
+    if (requiredKey) {
+      const clientKey = req.headers['x-publishable-key'];
+      if (!clientKey || clientKey !== requiredKey) {
+        return res.status(401).json({ error: "Unauthorized. Invalid or missing Publishable API Key." });
+      }
+    }
+    next();
+  });
+
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { username, password } = req.body;

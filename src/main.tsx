@@ -11,11 +11,27 @@ Object.defineProperty(window, 'fetch', {
   enumerable: true,
   writable: true,
   value: async (...args: Parameters<typeof originalFetch>) => {
-    if (typeof args[0] === 'string' && args[0].startsWith('/api/')) {
+    let url = args[0];
+    let options = args[1] || {};
+
+    if (typeof url === 'string' && url.startsWith('/api/')) {
       if (Capacitor.isNativePlatform()) {
+        // Since you are testing on Android directly without a PC, the app needs to connect to the live backend.
          const apiBase = (import.meta as any).env.VITE_API_BASE || 'https://ais-pre-2gbdiemrqbqhx6efzwgpgf-978163732318.asia-southeast1.run.app';
-         args[0] = apiBase + args[0];
+         url = apiBase + url;
       }
+
+      // Inject publishable key to make app securely self-dependent
+      const pubKey = (import.meta as any).env.VITE_APP_PUBLISHABLE_KEY;
+      if (pubKey) {
+        options.headers = {
+          ...options.headers,
+          'x-publishable-key': pubKey
+        };
+      }
+      
+      args[0] = url;
+      args[1] = options;
     }
     return originalFetch(...args);
   }
