@@ -31,7 +31,8 @@ import {
   AlertCircle,
   FileText,
   Image as ImageIcon,
-  Upload
+  Upload,
+  Trophy
 } from 'lucide-react';
 import PDFViewer from './components/features/PDFViewer';
 import QuestionImagesViewer from './components/features/QuestionImagesViewer';
@@ -42,6 +43,7 @@ import EzTestIcon from './components/common/EzTestIcon';
 import { AppContext } from './AppContext';
 import { useAppLogic } from './hooks/useAppLogic';
 import CelebrationModal from './components/features/CelebrationModal';
+import Leaderboard from './components/features/Leaderboard';
 import Modals from './components/tabs/Modals';
 import AuthPortal from './components/tabs/AuthPortal';
 import HomeTab from './components/tabs/HomeTab';
@@ -488,6 +490,17 @@ export default function App() {
                   <BookOpenCheck className="h-4 w-4 text-emerald-500" /> Mock Practice papers
                 </button>
 
+                <button
+                  onClick={() => { setActiveTab('leaderboard'); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-4.5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'leaderboard' 
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10' 
+                      : 'text-slate-650 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <Trophy className="h-4 w-4 text-amber-500" /> Score Leaderboards
+                </button>
+
                 {userType === 'admin' && (
                   <button
                     onClick={() => { setActiveTab('students'); setMobileMenuOpen(false); }}
@@ -616,6 +629,10 @@ export default function App() {
             {/* TAB CONTENT: STUDENTS ADMISSIONS DATABASE (ADMIN SECTOR ONLY) */}
             <StudentsTab />
 
+            {activeTab === 'leaderboard' && (
+              <Leaderboard />
+            )}
+
             {activeTab === 'profile' && (
               <ProfileView 
                 db={db}
@@ -634,7 +651,7 @@ export default function App() {
             id="pw-bottom-tabs" 
             className="w-full shrink-0 z-45 bg-white/95 backdrop-blur-md border-t border-slate-200/85 px-2 pt-2 flex justify-around items-center shadow-[0_-8px_32px_rgba(0,0,0,0.05)] select-none pb-[calc(12px+env(safe-area-inset-bottom))]"
           >
-            {['home', 'live', 'practice', 'students', 'profile'].map((tabId) => {
+            {['home', 'live', 'practice', 'leaderboard', 'students', 'profile'].map((tabId) => {
               if (tabId === 'students' && userType !== 'admin') return null;
 
               let label = '';
@@ -650,6 +667,9 @@ export default function App() {
               } else if (tabId === 'practice') {
                 label = 'Practice';
                 IconComp = BookOpenCheck;
+              } else if (tabId === 'leaderboard') {
+                label = 'Rankings';
+                IconComp = Trophy;
               } else if (tabId === 'students') {
                 label = 'Students';
                 IconComp = Users;

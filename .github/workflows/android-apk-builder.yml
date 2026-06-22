@@ -28,6 +28,9 @@ jobs:
       - name: Build Web Production Bundle
         run: npm run build
 
+      - name: Add Android Platform
+        run: npx cap add android
+
       - name: Sync Capacitor Android Project
         run: npx cap sync android
 

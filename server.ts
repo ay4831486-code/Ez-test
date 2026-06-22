@@ -65,21 +65,55 @@ async function computeStats() {
   
   for (const testId of testIds) {
     const testAttempts = allAttempts.filter(a => a.testId === testId && a.status === 'submitted');
-    const sorted = [...testAttempts].sort((a, b) => {
+    
+    // Group by studentId to keep only their best attempt for ranking calculation
+    const bestAttemptMap = new Map();
+    testAttempts.forEach(attempt => {
+       const existing = bestAttemptMap.get(attempt.studentId);
+       let isBetter = false;
+       if (!existing) {
+         isBetter = true;
+       } else {
+         if (attempt.score > existing.score) {
+           isBetter = true;
+         } else if (attempt.score === existing.score) {
+            const timeA = attempt.submitTime && attempt.startTime ? new Date(attempt.submitTime).getTime() - new Date(attempt.startTime).getTime() : 0;
+            const timeE = existing.submitTime && existing.startTime ? new Date(existing.submitTime).getTime() - new Date(existing.startTime).getTime() : 0;
+            if (timeA && timeE && timeA < timeE) {
+              isBetter = true;
+            }
+         }
+       }
+       if (isBetter) {
+         bestAttemptMap.set(attempt.studentId, attempt);
+       }
+    });
+
+    const uniqueBestAttempts = Array.from(bestAttemptMap.values());
+    const sorted = [...uniqueBestAttempts].sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      const timeA = a.submitTime ? new Date(a.submitTime).getTime() : 0;
-      const timeB = b.submitTime ? new Date(b.submitTime).getTime() : 0;
-      return timeA - timeB;
+      const timeA = a.submitTime && a.startTime ? new Date(a.submitTime).getTime() - new Date(a.startTime).getTime() : 0;
+      const timeB = b.submitTime && b.startTime ? new Date(b.submitTime).getTime() - new Date(b.startTime).getTime() : 0;
+      if (timeA && timeB && timeA !== timeB) return timeA - timeB;
+      
+      const subA = a.submitTime ? new Date(a.submitTime).getTime() : 0;
+      const subB = b.submitTime ? new Date(b.submitTime).getTime() : 0;
+      return subA - subB;
     });
 
     const totalCount = sorted.length;
     for (let index = 0; index < sorted.length; index++) {
-      const attempt = sorted[index];
+      const bestAttemptId = sorted[index].id;
       const rank = index + 1;
       const percentile = totalCount > 1 
         ? Math.round(((totalCount - rank) / (totalCount - 1)) * 100) 
         : 100;
-      await firestoreService.updateAttempt(attempt.id, { rank, percentile });
+        
+      // Update ALL attempts for this student on this test to have this rank/percentile
+      // so if they look at their history, the rank is their best rank or the rank of that attempt.
+      // Wait, it's better to only set the rank on their BEST attempt, or update all.
+      // Let's just update the attempt that earned the rank!
+      await firestoreService.updateAttempt(bestAttemptId, { rank, percentile });
     }
   }
 }
