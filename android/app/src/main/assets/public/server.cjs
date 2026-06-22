@@ -4,6 +4,10 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -30,229 +34,292 @@ var import_vite = require("vite");
 var import_genai = require("@google/genai");
 
 // src/db/firestoreService.ts
-var import_app = require("firebase-admin/app");
-var import_firestore = require("firebase-admin/firestore");
+var import_drizzle_orm2 = require("drizzle-orm");
 
-// firebase-applet-config.json
-var firebase_applet_config_default = {
-  projectId: "citric-buckeye-4lsxp",
-  appId: "1:671143637219:web:aac4861f872d64c09d95d6",
-  apiKey: "AIzaSyAF3GqKxbC9tpunoq_wuu2z5Ro5s51Jb2k",
-  authDomain: "citric-buckeye-4lsxp.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-044b1206-94dc-43f9-b122-4082f49907c0",
-  storageBucket: "citric-buckeye-4lsxp.firebasestorage.app",
-  messagingSenderId: "671143637219",
-  measurementId: ""
+// src/db/index.ts
+var import_node_postgres = require("drizzle-orm/node-postgres");
+var import_pg = __toESM(require("pg"), 1);
+
+// src/db/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  activities: () => activities,
+  adminSettings: () => adminSettings,
+  attempts: () => attempts,
+  attemptsRelations: () => attemptsRelations,
+  notifications: () => notifications,
+  students: () => students,
+  studentsRelations: () => studentsRelations,
+  tests: () => tests,
+  testsRelations: () => testsRelations
+});
+var import_drizzle_orm = require("drizzle-orm");
+var import_pg_core = require("drizzle-orm/pg-core");
+var students = (0, import_pg_core.pgTable)("students", {
+  id: (0, import_pg_core.text)("id").primaryKey(),
+  uid: (0, import_pg_core.text)("uid").unique(),
+  // Firebase Auth UID if needed
+  studentId: (0, import_pg_core.text)("student_id").notNull().unique(),
+  name: (0, import_pg_core.text)("name").notNull(),
+  mobile: (0, import_pg_core.text)("mobile").notNull(),
+  classVal: (0, import_pg_core.text)("class_val").notNull(),
+  rollNumber: (0, import_pg_core.text)("roll_number").notNull(),
+  batchYear: (0, import_pg_core.text)("batch_year"),
+  password: (0, import_pg_core.text)("password").notNull(),
+  // hashed
+  status: (0, import_pg_core.text)("status").notNull().default("Pending"),
+  isBlocked: (0, import_pg_core.boolean)("is_blocked").notNull().default(false),
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow(),
+  lastLoginAt: (0, import_pg_core.timestamp)("last_login_at"),
+  streakCount: (0, import_pg_core.integer)("streak_count").default(0)
+});
+var tests = (0, import_pg_core.pgTable)("tests", {
+  id: (0, import_pg_core.text)("id").primaryKey(),
+  title: (0, import_pg_core.text)("title").notNull(),
+  type: (0, import_pg_core.text)("type").notNull(),
+  // 'live' | 'practice'
+  classVal: (0, import_pg_core.text)("class_val").notNull(),
+  subject: (0, import_pg_core.text)("subject").notNull(),
+  date: (0, import_pg_core.text)("date").notNull(),
+  startTime: (0, import_pg_core.text)("start_time").notNull(),
+  endTime: (0, import_pg_core.text)("end_time").notNull(),
+  duration: (0, import_pg_core.integer)("duration").notNull(),
+  pdfName: (0, import_pg_core.text)("pdf_name").notNull(),
+  pdfData: (0, import_pg_core.text)("pdf_data").notNull(),
+  questionImages: (0, import_pg_core.jsonb)("question_images"),
+  // string[]
+  answerKey: (0, import_pg_core.jsonb)("answer_key").notNull(),
+  // {1: 'A', 2: 'B'}
+  published: (0, import_pg_core.boolean)("published").notNull().default(false),
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow()
+});
+var attempts = (0, import_pg_core.pgTable)("attempts", {
+  id: (0, import_pg_core.text)("id").primaryKey(),
+  testId: (0, import_pg_core.text)("test_id").references(() => tests.id).notNull(),
+  studentId: (0, import_pg_core.text)("student_id").references(() => students.id).notNull(),
+  studentName: (0, import_pg_core.text)("student_name").notNull(),
+  answers: (0, import_pg_core.jsonb)("answers").notNull(),
+  score: (0, import_pg_core.integer)("score").notNull().default(0),
+  correctAnswers: (0, import_pg_core.integer)("correct_answers").notNull().default(0),
+  wrongAnswers: (0, import_pg_core.integer)("wrong_answers").notNull().default(0),
+  accuracy: (0, import_pg_core.real)("accuracy").notNull().default(0),
+  status: (0, import_pg_core.text)("status").notNull(),
+  // 'started' | 'submitted'
+  startTime: (0, import_pg_core.timestamp)("start_time").notNull(),
+  submitTime: (0, import_pg_core.timestamp)("submit_time"),
+  rank: (0, import_pg_core.integer)("rank"),
+  percentile: (0, import_pg_core.real)("percentile")
+});
+var notifications = (0, import_pg_core.pgTable)("notifications", {
+  id: (0, import_pg_core.text)("id").primaryKey(),
+  title: (0, import_pg_core.text)("title").notNull(),
+  message: (0, import_pg_core.text)("message").notNull(),
+  type: (0, import_pg_core.text)("type").notNull(),
+  recipientId: (0, import_pg_core.text)("recipient_id").notNull(),
+  read: (0, import_pg_core.boolean)("read").notNull().default(false),
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow()
+});
+var activities = (0, import_pg_core.pgTable)("activities", {
+  id: (0, import_pg_core.text)("id").primaryKey(),
+  userId: (0, import_pg_core.text)("user_id").notNull(),
+  userName: (0, import_pg_core.text)("user_name").notNull(),
+  userType: (0, import_pg_core.text)("user_type").notNull(),
+  // 'admin' | 'student'
+  action: (0, import_pg_core.text)("action").notNull(),
+  timestamp: (0, import_pg_core.timestamp)("timestamp").defaultNow()
+});
+var adminSettings = (0, import_pg_core.pgTable)("admin_settings", {
+  id: (0, import_pg_core.serial)("id").primaryKey(),
+  adminPassword: (0, import_pg_core.text)("admin_password").notNull().default("ezadmin01")
+});
+var studentsRelations = (0, import_drizzle_orm.relations)(students, ({ many }) => ({
+  attempts: many(attempts)
+}));
+var testsRelations = (0, import_drizzle_orm.relations)(tests, ({ many }) => ({
+  attempts: many(attempts)
+}));
+var attemptsRelations = (0, import_drizzle_orm.relations)(attempts, ({ one }) => ({
+  test: one(tests, {
+    fields: [attempts.testId],
+    references: [tests.id]
+  }),
+  student: one(students, {
+    fields: [attempts.studentId],
+    references: [students.id]
+  })
+}));
+
+// src/db/index.ts
+var { Pool } = import_pg.default;
+var createPool = () => {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_6vKptoJnX3dB@ep-late-truth-aodqz064-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+    connectionTimeoutMillis: 15e3
+  });
 };
+var pool = createPool();
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle SQL pool client:", err);
+});
+var db = (0, import_node_postgres.drizzle)(pool, { schema: schema_exports });
 
 // src/db/firestoreService.ts
-if ((0, import_app.getApps)().length === 0) {
-  try {
-    (0, import_app.initializeApp)({
-      projectId: firebase_applet_config_default.projectId
-    });
-    console.log("Firebase Admin initialized successfully with Project ID:", firebase_applet_config_default.projectId);
-  } catch (error) {
-    console.error("Firebase Admin initialization error:", error);
-    (0, import_app.initializeApp)();
-  }
-}
-var firestoreDb = (0, import_firestore.getFirestore)(firebase_applet_config_default.firestoreDatabaseId);
-function convertDoc(doc) {
-  if (!doc.exists) return null;
-  const data = doc.data();
-  const res = { id: doc.id, ...data };
-  for (const key of Object.keys(res)) {
-    if (res[key] && typeof res[key] === "object" && typeof res[key].toDate === "function") {
-      res[key] = res[key].toDate().toISOString();
-    }
-  }
-  return res;
-}
 async function getStudents() {
-  const snapshot = await firestoreDb.collection("students").get();
-  return snapshot.docs.map((doc) => convertDoc(doc)).filter(Boolean);
+  const result = await db.select().from(students);
+  return result.map((s) => ({ ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() }));
 }
 async function getStudentByMobileOrId(username) {
-  const snapshotMob = await firestoreDb.collection("students").where("mobile", "==", username).get();
-  if (!snapshotMob.empty) {
-    return convertDoc(snapshotMob.docs[0]);
-  }
-  const snapshotId = await firestoreDb.collection("students").where("studentId", "==", username).get();
-  if (!snapshotId.empty) {
-    return convertDoc(snapshotId.docs[0]);
-  }
-  const docRef = await firestoreDb.collection("students").doc(username).get();
-  if (docRef.exists) {
-    return convertDoc(docRef);
+  const result = await db.select().from(students).where(
+    (0, import_drizzle_orm2.or)((0, import_drizzle_orm2.eq)(students.mobile, username), (0, import_drizzle_orm2.eq)(students.studentId, username), (0, import_drizzle_orm2.eq)(students.id, username))
+  ).limit(1);
+  if (result.length > 0) {
+    const s = result[0];
+    return { ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() };
   }
   return null;
 }
 async function getStudentById(id) {
-  const doc = await firestoreDb.collection("students").doc(id).get();
-  return convertDoc(doc);
+  const result = await db.select().from(students).where((0, import_drizzle_orm2.eq)(students.id, id)).limit(1);
+  if (result.length > 0) {
+    const s = result[0];
+    return { ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() };
+  }
+  return null;
 }
 async function insertStudent(studentData) {
   const idValue = studentData.id || "stud-" + Math.random().toString(36).substring(2, 9);
-  const finalData = {
-    ...studentData,
-    id: idValue,
-    createdAt: studentData.createdAt || (/* @__PURE__ */ new Date()).toISOString()
-  };
-  await firestoreDb.collection("students").doc(idValue).set(finalData);
-  return finalData;
+  const finalData = { ...studentData, id: idValue };
+  if (finalData.createdAt) finalData.createdAt = new Date(finalData.createdAt);
+  await db.insert(students).values(finalData);
+  return { ...finalData, createdAt: finalData.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
 }
 async function updateStudent(id, updateData) {
-  const docRef = firestoreDb.collection("students").doc(id);
   const cleanData = { ...updateData };
   delete cleanData.id;
-  Object.keys(cleanData).forEach((key) => {
-    if (cleanData[key] === void 0) delete cleanData[key];
+  Object.keys(cleanData).forEach((k) => {
+    if (cleanData[k] === void 0) delete cleanData[k];
   });
-  await docRef.update(cleanData);
-  const updatedDoc = await docRef.get();
-  return convertDoc(updatedDoc);
+  if (cleanData.createdAt) cleanData.createdAt = new Date(cleanData.createdAt);
+  if (cleanData.lastLoginAt) cleanData.lastLoginAt = new Date(cleanData.lastLoginAt);
+  await db.update(students).set(cleanData).where((0, import_drizzle_orm2.eq)(students.id, id));
+  return await getStudentById(id);
 }
 async function deleteStudent(id) {
-  await firestoreDb.collection("students").doc(id).delete();
+  await db.delete(students).where((0, import_drizzle_orm2.eq)(students.id, id));
 }
 async function getTests() {
-  const snapshot = await firestoreDb.collection("tests").get();
-  return snapshot.docs.map((doc) => convertDoc(doc)).filter(Boolean);
+  const result = await db.select().from(tests);
+  return result.map((t) => ({ ...t, createdAt: t.createdAt?.toISOString() }));
 }
 async function getTestById(id) {
-  const doc = await firestoreDb.collection("tests").doc(id).get();
-  return convertDoc(doc);
+  const result = await db.select().from(tests).where((0, import_drizzle_orm2.eq)(tests.id, id)).limit(1);
+  if (result.length > 0) {
+    const t = result[0];
+    return { ...t, createdAt: t.createdAt?.toISOString() };
+  }
+  return null;
 }
 async function insertTest(testData) {
   const idValue = testData.id || "test-" + Math.random().toString(36).substring(2, 9);
-  const finalData = {
-    ...testData,
-    id: idValue,
-    createdAt: testData.createdAt || (/* @__PURE__ */ new Date()).toISOString()
-  };
-  await firestoreDb.collection("tests").doc(idValue).set(finalData);
-  return finalData;
+  const finalData = { ...testData, id: idValue };
+  if (finalData.createdAt) finalData.createdAt = new Date(finalData.createdAt);
+  await db.insert(tests).values(finalData);
+  return { ...finalData, createdAt: finalData.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
 }
 async function updateTest(id, updateData) {
-  const docRef = firestoreDb.collection("tests").doc(id);
   const cleanData = { ...updateData };
   delete cleanData.id;
-  Object.keys(cleanData).forEach((key) => {
-    if (cleanData[key] === void 0) delete cleanData[key];
+  Object.keys(cleanData).forEach((k) => {
+    if (cleanData[k] === void 0) delete cleanData[k];
   });
-  await docRef.update(cleanData);
-  const updatedDoc = await docRef.get();
-  return convertDoc(updatedDoc);
+  if (cleanData.createdAt) cleanData.createdAt = new Date(cleanData.createdAt);
+  await db.update(tests).set(cleanData).where((0, import_drizzle_orm2.eq)(tests.id, id));
+  return await getTestById(id);
 }
 async function deleteTest(id) {
-  await firestoreDb.collection("tests").doc(id).delete();
+  await db.delete(tests).where((0, import_drizzle_orm2.eq)(tests.id, id));
 }
 async function getAttempts() {
-  const snapshot = await firestoreDb.collection("attempts").get();
-  return snapshot.docs.map((doc) => convertDoc(doc)).filter(Boolean);
+  const result = await db.select().from(attempts);
+  return result.map((a) => ({ ...a, startTime: a.startTime?.toISOString(), submitTime: a.submitTime?.toISOString() }));
 }
 async function getAttemptsByStudentAndTest(studentId, testId, status) {
-  let query = firestoreDb.collection("attempts").where("studentId", "==", studentId).where("testId", "==", testId);
-  if (status) {
-    query = query.where("status", "==", status);
-  }
-  const snapshot = await query.get();
-  return snapshot.docs.map((doc) => convertDoc(doc)).filter(Boolean);
+  const condition = (0, import_drizzle_orm2.and)((0, import_drizzle_orm2.eq)(attempts.studentId, studentId), (0, import_drizzle_orm2.eq)(attempts.testId, testId));
+  const fullCondition = status ? (0, import_drizzle_orm2.and)(condition, (0, import_drizzle_orm2.eq)(attempts.status, status)) : condition;
+  const result = await db.select().from(attempts).where(fullCondition);
+  return result.map((a) => ({ ...a, startTime: a.startTime?.toISOString(), submitTime: a.submitTime?.toISOString() }));
 }
 async function insertAttempt(attemptData) {
   const idValue = attemptData.id || "att-" + Math.random().toString(36).substring(2, 9);
-  const finalData = {
-    ...attemptData,
-    id: idValue,
-    startTime: attemptData.startTime instanceof Date ? attemptData.startTime.toISOString() : attemptData.startTime || (/* @__PURE__ */ new Date()).toISOString()
-  };
-  await firestoreDb.collection("attempts").doc(idValue).set(finalData);
-  return finalData;
+  const finalData = { ...attemptData, id: idValue };
+  if (finalData.startTime) finalData.startTime = new Date(finalData.startTime);
+  if (finalData.submitTime) finalData.submitTime = new Date(finalData.submitTime);
+  await db.insert(attempts).values(finalData);
+  return { ...finalData, startTime: finalData.startTime?.toISOString(), submitTime: finalData.submitTime?.toISOString() };
 }
 async function updateAttempt(id, updateData) {
-  const docRef = firestoreDb.collection("attempts").doc(id);
   const cleanData = { ...updateData };
   delete cleanData.id;
-  if (cleanData.startTime instanceof Date) cleanData.startTime = cleanData.startTime.toISOString();
-  if (cleanData.submitTime instanceof Date) cleanData.submitTime = cleanData.submitTime.toISOString();
-  Object.keys(cleanData).forEach((key) => {
-    if (cleanData[key] === void 0) delete cleanData[key];
+  Object.keys(cleanData).forEach((k) => {
+    if (cleanData[k] === void 0) delete cleanData[k];
   });
-  await docRef.update(cleanData);
-  const updatedDoc = await docRef.get();
-  return convertDoc(updatedDoc);
+  if (cleanData.startTime) cleanData.startTime = new Date(cleanData.startTime);
+  if (cleanData.submitTime) cleanData.submitTime = new Date(cleanData.submitTime);
+  await db.update(attempts).set(cleanData).where((0, import_drizzle_orm2.eq)(attempts.id, id));
+  const result = await db.select().from(attempts).where((0, import_drizzle_orm2.eq)(attempts.id, id)).limit(1);
+  if (result.length > 0) {
+    const a = result[0];
+    return { ...a, startTime: a.startTime?.toISOString(), submitTime: a.submitTime?.toISOString() };
+  }
+  return null;
 }
 async function deleteAttemptsByStudentId(studentId) {
-  const snapshot = await firestoreDb.collection("attempts").where("studentId", "==", studentId).get();
-  const batch = firestoreDb.batch();
-  snapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
-  await batch.commit();
+  await db.delete(attempts).where((0, import_drizzle_orm2.eq)(attempts.studentId, studentId));
 }
 async function deleteAttemptsByTestId(testId) {
-  const snapshot = await firestoreDb.collection("attempts").where("testId", "==", testId).get();
-  const batch = firestoreDb.batch();
-  snapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
-  await batch.commit();
+  await db.delete(attempts).where((0, import_drizzle_orm2.eq)(attempts.testId, testId));
 }
 async function getNotifications() {
-  const snapshot = await firestoreDb.collection("notifications").get();
-  const list = snapshot.docs.map((doc) => convertDoc(doc)).filter(Boolean);
-  return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const result = await db.select().from(notifications);
+  return result.map((n) => ({ ...n, createdAt: n.createdAt?.toISOString() })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 async function insertNotification(notificationData) {
   const idValue = notificationData.id || "notif-" + Math.random().toString(36).substring(2, 9);
-  const finalData = {
-    ...notificationData,
-    id: idValue,
-    createdAt: notificationData.createdAt || (/* @__PURE__ */ new Date()).toISOString()
-  };
-  await firestoreDb.collection("notifications").doc(idValue).set(finalData);
-  return finalData;
+  const finalData = { ...notificationData, id: idValue };
+  if (finalData.createdAt) finalData.createdAt = new Date(finalData.createdAt);
+  await db.insert(notifications).values(finalData);
+  return { ...finalData, createdAt: finalData.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
 }
 async function markNotificationsRead(studentId) {
-  const snapshot = await firestoreDb.collection("notifications").get();
-  const batch = firestoreDb.batch();
-  snapshot.docs.forEach((doc) => {
-    const data = doc.data();
-    if (data.recipientId === studentId || data.recipientId === "all") {
-      batch.update(doc.ref, { read: true });
-    }
-  });
-  await batch.commit();
+  await db.update(notifications).set({ read: true }).where((0, import_drizzle_orm2.or)((0, import_drizzle_orm2.eq)(notifications.recipientId, studentId), (0, import_drizzle_orm2.eq)(notifications.recipientId, "all")));
 }
 async function getActivities() {
-  const snapshot = await firestoreDb.collection("activities").get();
-  const list = snapshot.docs.map((doc) => convertDoc(doc)).filter(Boolean);
-  return list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const result = await db.select().from(activities);
+  return result.map((a) => ({ ...a, timestamp: a.timestamp?.toISOString() })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 async function insertActivity(activityData) {
   const idValue = activityData.id || "act-" + Math.random().toString(36).substring(2, 9);
-  const finalData = {
-    ...activityData,
-    id: idValue,
-    timestamp: activityData.timestamp || (/* @__PURE__ */ new Date()).toISOString()
-  };
-  await firestoreDb.collection("activities").doc(idValue).set(finalData);
-  return finalData;
+  const finalData = { ...activityData, id: idValue };
+  if (finalData.timestamp) finalData.timestamp = new Date(finalData.timestamp);
+  await db.insert(activities).values(finalData);
+  return { ...finalData, timestamp: finalData.timestamp?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
 }
 async function getAdminPassword() {
-  const docRef = firestoreDb.collection("admin_settings").doc("global");
-  const dSnapshot = await docRef.get();
-  if (dSnapshot.exists) {
-    return dSnapshot.data()?.adminPassword || "ezadmin01";
+  const result = await db.select().from(adminSettings).limit(1);
+  if (result.length > 0) {
+    return result[0].adminPassword;
   } else {
-    await docRef.set({ adminPassword: "ezadmin01" });
+    await db.insert(adminSettings).values({ adminPassword: "ezadmin01" });
     return "ezadmin01";
   }
 }
 async function updateAdminPassword(pwd) {
-  const docRef = firestoreDb.collection("admin_settings").doc("global");
-  await docRef.set({ adminPassword: pwd });
+  const result = await db.select().from(adminSettings).limit(1);
+  if (result.length > 0) {
+    await db.update(adminSettings).set({ adminPassword: pwd }).where((0, import_drizzle_orm2.eq)(adminSettings.id, result[0].id));
+  } else {
+    await db.insert(adminSettings).values({ adminPassword: pwd });
+  }
 }
 
 // server.ts
@@ -311,18 +378,43 @@ async function computeStats() {
   const testIds = Array.from(new Set(allAttempts.map((a) => a.testId).filter(Boolean)));
   for (const testId of testIds) {
     const testAttempts = allAttempts.filter((a) => a.testId === testId && a.status === "submitted");
-    const sorted = [...testAttempts].sort((a, b) => {
+    const bestAttemptMap = /* @__PURE__ */ new Map();
+    testAttempts.forEach((attempt) => {
+      const existing = bestAttemptMap.get(attempt.studentId);
+      let isBetter = false;
+      if (!existing) {
+        isBetter = true;
+      } else {
+        if (attempt.score > existing.score) {
+          isBetter = true;
+        } else if (attempt.score === existing.score) {
+          const timeA = attempt.submitTime && attempt.startTime ? new Date(attempt.submitTime).getTime() - new Date(attempt.startTime).getTime() : 0;
+          const timeE = existing.submitTime && existing.startTime ? new Date(existing.submitTime).getTime() - new Date(existing.startTime).getTime() : 0;
+          if (timeA && timeE && timeA < timeE) {
+            isBetter = true;
+          }
+        }
+      }
+      if (isBetter) {
+        bestAttemptMap.set(attempt.studentId, attempt);
+      }
+    });
+    const uniqueBestAttempts = Array.from(bestAttemptMap.values());
+    const sorted = [...uniqueBestAttempts].sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      const timeA = a.submitTime ? new Date(a.submitTime).getTime() : 0;
-      const timeB = b.submitTime ? new Date(b.submitTime).getTime() : 0;
-      return timeA - timeB;
+      const timeA = a.submitTime && a.startTime ? new Date(a.submitTime).getTime() - new Date(a.startTime).getTime() : 0;
+      const timeB = b.submitTime && b.startTime ? new Date(b.submitTime).getTime() - new Date(b.startTime).getTime() : 0;
+      if (timeA && timeB && timeA !== timeB) return timeA - timeB;
+      const subA = a.submitTime ? new Date(a.submitTime).getTime() : 0;
+      const subB = b.submitTime ? new Date(b.submitTime).getTime() : 0;
+      return subA - subB;
     });
     const totalCount = sorted.length;
     for (let index = 0; index < sorted.length; index++) {
-      const attempt = sorted[index];
+      const bestAttemptId = sorted[index].id;
       const rank = index + 1;
       const percentile = totalCount > 1 ? Math.round((totalCount - rank) / (totalCount - 1) * 100) : 100;
-      await updateAttempt(attempt.id, { rank, percentile });
+      await updateAttempt(bestAttemptId, { rank, percentile });
     }
   }
 }

@@ -11,13 +11,10 @@ Object.defineProperty(window, 'fetch', {
   writable: true,
   value: async (...args: Parameters<typeof originalFetch>) => {
     if (typeof args[0] === 'string' && args[0].startsWith('/api/')) {
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const isCapacitor = isLocalhost && window.location.protocol.includes('http');
+      const isCapacitorNative = !!(window as any).Capacitor?.isNative;
       
-      // Check if we have an explicit VITE_API_BASE
-      const apiBase = (import.meta as any).env.VITE_API_BASE;
-      // We want to rewrite if we are in Capacitor
-      if (isCapacitor && apiBase) {
+      if (isCapacitorNative) {
+         const apiBase = (import.meta as any).env.VITE_API_BASE || 'https://ais-pre-2gbdiemrqbqhx6efzwgpgf-978163732318.asia-southeast1.run.app';
          args[0] = apiBase + args[0];
       }
     }
