@@ -55,7 +55,9 @@ jobs:
           java-version: '21'
 
       - name: Restore Pristine Gradle Wrapper JAR
-        run: node src/scripts/download-wrapper.cjs
+        run: |
+          mkdir -p android/gradle/wrapper
+          curl -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.2.1/gradle/wrapper/gradle-wrapper.jar
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
