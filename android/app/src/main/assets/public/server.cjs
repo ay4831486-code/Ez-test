@@ -4,10 +4,6 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -30,169 +26,91 @@ var import_dotenv = __toESM(require("dotenv"), 1);
 var import_express = __toESM(require("express"), 1);
 var import_cors = __toESM(require("cors"), 1);
 var import_compression = __toESM(require("compression"), 1);
-var import_path = __toESM(require("path"), 1);
+var import_path2 = __toESM(require("path"), 1);
 var import_vite = require("vite");
 var import_genai = require("@google/genai");
 
 // src/db/dbService.ts
-var import_drizzle_orm2 = require("drizzle-orm");
+var import_firestore2 = require("firebase/firestore");
 
-// src/db/index.ts
-var import_node_postgres = require("drizzle-orm/node-postgres");
-var import_pg = __toESM(require("pg"), 1);
-
-// src/db/schema.ts
-var schema_exports = {};
-__export(schema_exports, {
-  activities: () => activities,
-  adminSettings: () => adminSettings,
-  attempts: () => attempts,
-  attemptsRelations: () => attemptsRelations,
-  notifications: () => notifications,
-  students: () => students,
-  studentsRelations: () => studentsRelations,
-  tests: () => tests,
-  testsRelations: () => testsRelations
-});
-var import_drizzle_orm = require("drizzle-orm");
-var import_pg_core = require("drizzle-orm/pg-core");
-var students = (0, import_pg_core.pgTable)("students", {
-  id: (0, import_pg_core.text)("id").primaryKey(),
-  uid: (0, import_pg_core.text)("uid").unique(),
-  // Firebase Auth UID if needed
-  studentId: (0, import_pg_core.text)("student_id").notNull().unique(),
-  name: (0, import_pg_core.text)("name").notNull(),
-  mobile: (0, import_pg_core.text)("mobile").notNull(),
-  classVal: (0, import_pg_core.text)("class_val").notNull(),
-  rollNumber: (0, import_pg_core.text)("roll_number").notNull(),
-  batchYear: (0, import_pg_core.text)("batch_year"),
-  password: (0, import_pg_core.text)("password").notNull(),
-  // hashed
-  status: (0, import_pg_core.text)("status").notNull().default("Pending"),
-  isBlocked: (0, import_pg_core.boolean)("is_blocked").notNull().default(false),
-  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow(),
-  lastLoginAt: (0, import_pg_core.timestamp)("last_login_at"),
-  streakCount: (0, import_pg_core.integer)("streak_count").default(0)
-});
-var tests = (0, import_pg_core.pgTable)("tests", {
-  id: (0, import_pg_core.text)("id").primaryKey(),
-  title: (0, import_pg_core.text)("title").notNull(),
-  type: (0, import_pg_core.text)("type").notNull(),
-  // 'live' | 'practice'
-  classVal: (0, import_pg_core.text)("class_val").notNull(),
-  subject: (0, import_pg_core.text)("subject").notNull(),
-  date: (0, import_pg_core.text)("date").notNull(),
-  startTime: (0, import_pg_core.text)("start_time").notNull(),
-  endTime: (0, import_pg_core.text)("end_time").notNull(),
-  duration: (0, import_pg_core.integer)("duration").notNull(),
-  pdfName: (0, import_pg_core.text)("pdf_name").notNull(),
-  pdfData: (0, import_pg_core.text)("pdf_data").notNull(),
-  questionImages: (0, import_pg_core.jsonb)("question_images"),
-  // string[]
-  answerKey: (0, import_pg_core.jsonb)("answer_key").notNull(),
-  // {1: 'A', 2: 'B'}
-  published: (0, import_pg_core.boolean)("published").notNull().default(false),
-  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow()
-});
-var attempts = (0, import_pg_core.pgTable)("attempts", {
-  id: (0, import_pg_core.text)("id").primaryKey(),
-  testId: (0, import_pg_core.text)("test_id").references(() => tests.id).notNull(),
-  studentId: (0, import_pg_core.text)("student_id").references(() => students.id).notNull(),
-  studentName: (0, import_pg_core.text)("student_name").notNull(),
-  answers: (0, import_pg_core.jsonb)("answers").notNull(),
-  score: (0, import_pg_core.integer)("score").notNull().default(0),
-  correctAnswers: (0, import_pg_core.integer)("correct_answers").notNull().default(0),
-  wrongAnswers: (0, import_pg_core.integer)("wrong_answers").notNull().default(0),
-  accuracy: (0, import_pg_core.real)("accuracy").notNull().default(0),
-  status: (0, import_pg_core.text)("status").notNull(),
-  // 'started' | 'submitted'
-  startTime: (0, import_pg_core.timestamp)("start_time").notNull(),
-  submitTime: (0, import_pg_core.timestamp)("submit_time"),
-  rank: (0, import_pg_core.integer)("rank"),
-  percentile: (0, import_pg_core.real)("percentile")
-});
-var notifications = (0, import_pg_core.pgTable)("notifications", {
-  id: (0, import_pg_core.text)("id").primaryKey(),
-  title: (0, import_pg_core.text)("title").notNull(),
-  message: (0, import_pg_core.text)("message").notNull(),
-  type: (0, import_pg_core.text)("type").notNull(),
-  recipientId: (0, import_pg_core.text)("recipient_id").notNull(),
-  read: (0, import_pg_core.boolean)("read").notNull().default(false),
-  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow()
-});
-var activities = (0, import_pg_core.pgTable)("activities", {
-  id: (0, import_pg_core.text)("id").primaryKey(),
-  userId: (0, import_pg_core.text)("user_id").notNull(),
-  userName: (0, import_pg_core.text)("user_name").notNull(),
-  userType: (0, import_pg_core.text)("user_type").notNull(),
-  // 'admin' | 'student'
-  action: (0, import_pg_core.text)("action").notNull(),
-  timestamp: (0, import_pg_core.timestamp)("timestamp").defaultNow()
-});
-var adminSettings = (0, import_pg_core.pgTable)("admin_settings", {
-  id: (0, import_pg_core.serial)("id").primaryKey(),
-  adminPassword: (0, import_pg_core.text)("admin_password").notNull().default("ezadmin01")
-});
-var studentsRelations = (0, import_drizzle_orm.relations)(students, ({ many }) => ({
-  attempts: many(attempts)
-}));
-var testsRelations = (0, import_drizzle_orm.relations)(tests, ({ many }) => ({
-  attempts: many(attempts)
-}));
-var attemptsRelations = (0, import_drizzle_orm.relations)(attempts, ({ one }) => ({
-  test: one(tests, {
-    fields: [attempts.testId],
-    references: [tests.id]
-  }),
-  student: one(students, {
-    fields: [attempts.studentId],
-    references: [students.id]
-  })
-}));
-
-// src/db/index.ts
-var { Pool } = import_pg.default;
-var createPool = () => {
-  return new Pool({
-    connectionString: process.env.SUPABASE_DATABASE_URL || "postgresql://postgres:Aditya%409942180655@db.lvdxuaoafxesoqlmywap.supabase.co:5432/postgres",
-    connectionTimeoutMillis: 15e3
-  });
+// src/db/firebase.ts
+var import_app = require("firebase/app");
+var import_firestore = require("firebase/firestore");
+var import_fs = __toESM(require("fs"), 1);
+var import_path = __toESM(require("path"), 1);
+function getFirebaseConfig() {
+  try {
+    const configPath = import_path.default.resolve(process.cwd(), "firebase-applet-config.json");
+    if (import_fs.default.existsSync(configPath)) {
+      const content = import_fs.default.readFileSync(configPath, "utf-8");
+      return JSON.parse(content);
+    }
+  } catch (err) {
+    console.warn("Could not read firebase-applet-config.json:", err);
+  }
+  return {
+    projectId: process.env.FIREBASE_PROJECT_ID || "citric-buckeye-4lsxp",
+    appId: process.env.FIREBASE_APP_ID || "1:671143637219:web:aac4861f872d64c09d95d6",
+    apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAF3GqKxbC9tpunoq_wuu2z5Ro5s51Jb2k",
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "citric-buckeye-4lsxp.firebaseapp.com",
+    firestoreDatabaseId: process.env.FIREBASE_DATABASE_ID || "ai-studio-044b1206-94dc-43f9-b122-4082f49907c0",
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "citric-buckeye-4lsxp.firebasestorage.app",
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "671143637219"
+  };
+}
+var config = getFirebaseConfig();
+var firebaseConfig = {
+  apiKey: config.apiKey,
+  authDomain: config.authDomain,
+  projectId: config.projectId,
+  storageBucket: config.storageBucket,
+  messagingSenderId: config.messagingSenderId,
+  appId: config.appId
 };
-var pool = createPool();
-pool.on("error", (err) => {
-  console.error("Unexpected error on idle SQL pool client:", err);
-});
-var db = (0, import_node_postgres.drizzle)(pool, { schema: schema_exports });
+var app = (0, import_app.getApps)().length === 0 ? (0, import_app.initializeApp)(firebaseConfig) : (0, import_app.getApp)();
+var firestore = config.firestoreDatabaseId ? (0, import_firestore.getFirestore)(app, config.firestoreDatabaseId) : (0, import_firestore.getFirestore)(app);
 
 // src/db/dbService.ts
+function docToObject(docSnap) {
+  if (!docSnap.exists()) return null;
+  const data = docSnap.data();
+  return {
+    ...data,
+    id: docSnap.id
+  };
+}
 async function getStudents() {
-  const result = await db.select().from(students);
-  return result.map((s) => ({ ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() }));
+  const qSnapshot = await (0, import_firestore2.getDocs)((0, import_firestore2.collection)(firestore, "students"));
+  return qSnapshot.docs.map((doc2) => docToObject(doc2));
 }
 async function getStudentByMobileOrId(username) {
-  const result = await db.select().from(students).where(
-    (0, import_drizzle_orm2.or)((0, import_drizzle_orm2.eq)(students.mobile, username), (0, import_drizzle_orm2.eq)(students.studentId, username), (0, import_drizzle_orm2.eq)(students.id, username))
-  ).limit(1);
-  if (result.length > 0) {
-    const s = result[0];
-    return { ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() };
+  const qById = (0, import_firestore2.query)((0, import_firestore2.collection)(firestore, "students"), (0, import_firestore2.where)("studentId", "==", username));
+  let qSnapshot = await (0, import_firestore2.getDocs)(qById);
+  if (qSnapshot.empty) {
+    const qByMobile = (0, import_firestore2.query)((0, import_firestore2.collection)(firestore, "students"), (0, import_firestore2.where)("mobile", "==", username));
+    qSnapshot = await (0, import_firestore2.getDocs)(qByMobile);
   }
-  return null;
+  if (qSnapshot.empty) {
+    const docRef = (0, import_firestore2.doc)(firestore, "students", username);
+    const docSnap = await (0, import_firestore2.getDoc)(docRef);
+    if (docSnap.exists()) {
+      return docToObject(docSnap);
+    }
+    return null;
+  }
+  return docToObject(qSnapshot.docs[0]);
 }
 async function getStudentById(id) {
-  const result = await db.select().from(students).where((0, import_drizzle_orm2.eq)(students.id, id)).limit(1);
-  if (result.length > 0) {
-    const s = result[0];
-    return { ...s, createdAt: s.createdAt?.toISOString(), lastLoginAt: s.lastLoginAt?.toISOString() };
-  }
-  return null;
+  const docRef = (0, import_firestore2.doc)(firestore, "students", id);
+  const docSnap = await (0, import_firestore2.getDoc)(docRef);
+  return docToObject(docSnap);
 }
 async function insertStudent(studentData) {
   const idValue = studentData.id || "stud-" + Math.random().toString(36).substring(2, 9);
   const finalData = { ...studentData, id: idValue };
-  if (finalData.createdAt) finalData.createdAt = new Date(finalData.createdAt);
-  await db.insert(students).values(finalData);
-  return { ...finalData, createdAt: finalData.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
+  const docRef = (0, import_firestore2.doc)(firestore, "students", idValue);
+  await (0, import_firestore2.setDoc)(docRef, finalData);
+  return finalData;
 }
 async function updateStudent(id, updateData) {
   const cleanData = { ...updateData };
@@ -200,32 +118,29 @@ async function updateStudent(id, updateData) {
   Object.keys(cleanData).forEach((k) => {
     if (cleanData[k] === void 0) delete cleanData[k];
   });
-  if (cleanData.createdAt) cleanData.createdAt = new Date(cleanData.createdAt);
-  if (cleanData.lastLoginAt) cleanData.lastLoginAt = new Date(cleanData.lastLoginAt);
-  await db.update(students).set(cleanData).where((0, import_drizzle_orm2.eq)(students.id, id));
+  const docRef = (0, import_firestore2.doc)(firestore, "students", id);
+  await (0, import_firestore2.updateDoc)(docRef, cleanData);
   return await getStudentById(id);
 }
 async function deleteStudent(id) {
-  await db.delete(students).where((0, import_drizzle_orm2.eq)(students.id, id));
+  const docRef = (0, import_firestore2.doc)(firestore, "students", id);
+  await (0, import_firestore2.deleteDoc)(docRef);
 }
 async function getTests() {
-  const result = await db.select().from(tests);
-  return result.map((t) => ({ ...t, createdAt: t.createdAt?.toISOString() }));
+  const qSnapshot = await (0, import_firestore2.getDocs)((0, import_firestore2.collection)(firestore, "tests"));
+  return qSnapshot.docs.map((doc2) => docToObject(doc2));
 }
 async function getTestById(id) {
-  const result = await db.select().from(tests).where((0, import_drizzle_orm2.eq)(tests.id, id)).limit(1);
-  if (result.length > 0) {
-    const t = result[0];
-    return { ...t, createdAt: t.createdAt?.toISOString() };
-  }
-  return null;
+  const docRef = (0, import_firestore2.doc)(firestore, "tests", id);
+  const docSnap = await (0, import_firestore2.getDoc)(docRef);
+  return docToObject(docSnap);
 }
 async function insertTest(testData) {
   const idValue = testData.id || "test-" + Math.random().toString(36).substring(2, 9);
   const finalData = { ...testData, id: idValue };
-  if (finalData.createdAt) finalData.createdAt = new Date(finalData.createdAt);
-  await db.insert(tests).values(finalData);
-  return { ...finalData, createdAt: finalData.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
+  const docRef = (0, import_firestore2.doc)(firestore, "tests", idValue);
+  await (0, import_firestore2.setDoc)(docRef, finalData);
+  return finalData;
 }
 async function updateTest(id, updateData) {
   const cleanData = { ...updateData };
@@ -233,30 +148,41 @@ async function updateTest(id, updateData) {
   Object.keys(cleanData).forEach((k) => {
     if (cleanData[k] === void 0) delete cleanData[k];
   });
-  if (cleanData.createdAt) cleanData.createdAt = new Date(cleanData.createdAt);
-  await db.update(tests).set(cleanData).where((0, import_drizzle_orm2.eq)(tests.id, id));
+  const docRef = (0, import_firestore2.doc)(firestore, "tests", id);
+  await (0, import_firestore2.updateDoc)(docRef, cleanData);
   return await getTestById(id);
 }
 async function deleteTest(id) {
-  await db.delete(tests).where((0, import_drizzle_orm2.eq)(tests.id, id));
+  const docRef = (0, import_firestore2.doc)(firestore, "tests", id);
+  await (0, import_firestore2.deleteDoc)(docRef);
 }
 async function getAttempts() {
-  const result = await db.select().from(attempts);
-  return result.map((a) => ({ ...a, startTime: a.startTime?.toISOString(), submitTime: a.submitTime?.toISOString() }));
+  const qSnapshot = await (0, import_firestore2.getDocs)((0, import_firestore2.collection)(firestore, "attempts"));
+  return qSnapshot.docs.map((doc2) => docToObject(doc2));
 }
 async function getAttemptsByStudentAndTest(studentId, testId, status) {
-  const condition = (0, import_drizzle_orm2.and)((0, import_drizzle_orm2.eq)(attempts.studentId, studentId), (0, import_drizzle_orm2.eq)(attempts.testId, testId));
-  const fullCondition = status ? (0, import_drizzle_orm2.and)(condition, (0, import_drizzle_orm2.eq)(attempts.status, status)) : condition;
-  const result = await db.select().from(attempts).where(fullCondition);
-  return result.map((a) => ({ ...a, startTime: a.startTime?.toISOString(), submitTime: a.submitTime?.toISOString() }));
+  let q = (0, import_firestore2.query)(
+    (0, import_firestore2.collection)(firestore, "attempts"),
+    (0, import_firestore2.where)("studentId", "==", studentId),
+    (0, import_firestore2.where)("testId", "==", testId)
+  );
+  if (status) {
+    q = (0, import_firestore2.query)(
+      (0, import_firestore2.collection)(firestore, "attempts"),
+      (0, import_firestore2.where)("studentId", "==", studentId),
+      (0, import_firestore2.where)("testId", "==", testId),
+      (0, import_firestore2.where)("status", "==", status)
+    );
+  }
+  const qSnapshot = await (0, import_firestore2.getDocs)(q);
+  return qSnapshot.docs.map((doc2) => docToObject(doc2));
 }
 async function insertAttempt(attemptData) {
   const idValue = attemptData.id || "att-" + Math.random().toString(36).substring(2, 9);
   const finalData = { ...attemptData, id: idValue };
-  if (finalData.startTime) finalData.startTime = new Date(finalData.startTime);
-  if (finalData.submitTime) finalData.submitTime = new Date(finalData.submitTime);
-  await db.insert(attempts).values(finalData);
-  return { ...finalData, startTime: finalData.startTime?.toISOString(), submitTime: finalData.submitTime?.toISOString() };
+  const docRef = (0, import_firestore2.doc)(firestore, "attempts", idValue);
+  await (0, import_firestore2.setDoc)(docRef, finalData);
+  return finalData;
 }
 async function updateAttempt(id, updateData) {
   const cleanData = { ...updateData };
@@ -264,62 +190,91 @@ async function updateAttempt(id, updateData) {
   Object.keys(cleanData).forEach((k) => {
     if (cleanData[k] === void 0) delete cleanData[k];
   });
-  if (cleanData.startTime) cleanData.startTime = new Date(cleanData.startTime);
-  if (cleanData.submitTime) cleanData.submitTime = new Date(cleanData.submitTime);
-  await db.update(attempts).set(cleanData).where((0, import_drizzle_orm2.eq)(attempts.id, id));
-  const result = await db.select().from(attempts).where((0, import_drizzle_orm2.eq)(attempts.id, id)).limit(1);
-  if (result.length > 0) {
-    const a = result[0];
-    return { ...a, startTime: a.startTime?.toISOString(), submitTime: a.submitTime?.toISOString() };
-  }
-  return null;
+  const docRef = (0, import_firestore2.doc)(firestore, "attempts", id);
+  await (0, import_firestore2.updateDoc)(docRef, cleanData);
+  const docSnap = await (0, import_firestore2.getDoc)(docRef);
+  return docToObject(docSnap);
 }
 async function deleteAttemptsByStudentId(studentId) {
-  await db.delete(attempts).where((0, import_drizzle_orm2.eq)(attempts.studentId, studentId));
+  const q = (0, import_firestore2.query)((0, import_firestore2.collection)(firestore, "attempts"), (0, import_firestore2.where)("studentId", "==", studentId));
+  const qSnapshot = await (0, import_firestore2.getDocs)(q);
+  const batch = (0, import_firestore2.writeBatch)(firestore);
+  qSnapshot.docs.forEach((docSnap) => {
+    batch.delete(docSnap.ref);
+  });
+  await batch.commit();
 }
 async function deleteAttemptsByTestId(testId) {
-  await db.delete(attempts).where((0, import_drizzle_orm2.eq)(attempts.testId, testId));
+  const q = (0, import_firestore2.query)((0, import_firestore2.collection)(firestore, "attempts"), (0, import_firestore2.where)("testId", "==", testId));
+  const qSnapshot = await (0, import_firestore2.getDocs)(q);
+  const batch = (0, import_firestore2.writeBatch)(firestore);
+  qSnapshot.docs.forEach((docSnap) => {
+    batch.delete(docSnap.ref);
+  });
+  await batch.commit();
 }
 async function getNotifications() {
-  const result = await db.select().from(notifications);
-  return result.map((n) => ({ ...n, createdAt: n.createdAt?.toISOString() })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const qSnapshot = await (0, import_firestore2.getDocs)((0, import_firestore2.collection)(firestore, "notifications"));
+  const list = qSnapshot.docs.map((doc2) => docToObject(doc2));
+  return list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 }
 async function insertNotification(notificationData) {
   const idValue = notificationData.id || "notif-" + Math.random().toString(36).substring(2, 9);
-  const finalData = { ...notificationData, id: idValue };
-  if (finalData.createdAt) finalData.createdAt = new Date(finalData.createdAt);
-  await db.insert(notifications).values(finalData);
-  return { ...finalData, createdAt: finalData.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
+  const finalData = {
+    ...notificationData,
+    id: idValue,
+    createdAt: notificationData.createdAt || (/* @__PURE__ */ new Date()).toISOString()
+  };
+  const docRef = (0, import_firestore2.doc)(firestore, "notifications", idValue);
+  await (0, import_firestore2.setDoc)(docRef, finalData);
+  return finalData;
 }
 async function markNotificationsRead(studentId) {
-  await db.update(notifications).set({ read: true }).where((0, import_drizzle_orm2.or)((0, import_drizzle_orm2.eq)(notifications.recipientId, studentId), (0, import_drizzle_orm2.eq)(notifications.recipientId, "all")));
+  const q1 = (0, import_firestore2.query)((0, import_firestore2.collection)(firestore, "notifications"), (0, import_firestore2.where)("recipientId", "==", studentId));
+  const q2 = (0, import_firestore2.query)((0, import_firestore2.collection)(firestore, "notifications"), (0, import_firestore2.where)("recipientId", "==", "all"));
+  const [shot1, shot2] = await Promise.all([(0, import_firestore2.getDocs)(q1), (0, import_firestore2.getDocs)(q2)]);
+  const batch = (0, import_firestore2.writeBatch)(firestore);
+  shot1.docs.forEach((docSnap) => {
+    batch.update(docSnap.ref, { read: true });
+  });
+  shot2.docs.forEach((docSnap) => {
+    batch.update(docSnap.ref, { read: true });
+  });
+  await batch.commit();
 }
 async function getActivities() {
-  const result = await db.select().from(activities);
-  return result.map((a) => ({ ...a, timestamp: a.timestamp?.toISOString() })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const qSnapshot = await (0, import_firestore2.getDocs)((0, import_firestore2.collection)(firestore, "activities"));
+  const list = qSnapshot.docs.map((doc2) => docToObject(doc2));
+  return list.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
 }
 async function insertActivity(activityData) {
   const idValue = activityData.id || "act-" + Math.random().toString(36).substring(2, 9);
-  const finalData = { ...activityData, id: idValue };
-  if (finalData.timestamp) finalData.timestamp = new Date(finalData.timestamp);
-  await db.insert(activities).values(finalData);
-  return { ...finalData, timestamp: finalData.timestamp?.toISOString() || (/* @__PURE__ */ new Date()).toISOString() };
+  const finalData = {
+    ...activityData,
+    id: idValue,
+    timestamp: activityData.timestamp || (/* @__PURE__ */ new Date()).toISOString()
+  };
+  const docRef = (0, import_firestore2.doc)(firestore, "activities", idValue);
+  await (0, import_firestore2.setDoc)(docRef, finalData);
+  return finalData;
 }
 async function getAdminPassword() {
-  const result = await db.select().from(adminSettings).limit(1);
-  if (result.length > 0) {
-    return result[0].adminPassword;
+  const docRef = (0, import_firestore2.doc)(firestore, "adminSettings", "settings");
+  const docSnap = await (0, import_firestore2.getDoc)(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data().adminPassword;
   } else {
-    await db.insert(adminSettings).values({ adminPassword: "ezadmin01" });
+    await (0, import_firestore2.setDoc)(docRef, { adminPassword: "ezadmin01" });
     return "ezadmin01";
   }
 }
 async function updateAdminPassword(pwd) {
-  const result = await db.select().from(adminSettings).limit(1);
-  if (result.length > 0) {
-    await db.update(adminSettings).set({ adminPassword: pwd }).where((0, import_drizzle_orm2.eq)(adminSettings.id, result[0].id));
+  const docRef = (0, import_firestore2.doc)(firestore, "adminSettings", "settings");
+  const docSnap = await (0, import_firestore2.getDoc)(docRef);
+  if (docSnap.exists()) {
+    await (0, import_firestore2.updateDoc)(docRef, { adminPassword: pwd });
   } else {
-    await db.insert(adminSettings).values({ adminPassword: pwd });
+    await (0, import_firestore2.setDoc)(docRef, { adminPassword: pwd });
   }
 }
 
@@ -420,19 +375,19 @@ async function computeStats() {
   }
 }
 async function startServer() {
-  const app = (0, import_express.default)();
+  const app2 = (0, import_express.default)();
   const PORT = 3e3;
-  app.use((0, import_cors.default)({
+  app2.use((0, import_cors.default)({
     origin: "*",
     allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-publishable-key", "Authorization"]
   }));
-  app.use((0, import_compression.default)());
-  app.use(import_express.default.json({ limit: "10mb" }));
-  app.use(import_express.default.urlencoded({ extended: true, limit: "10mb" }));
-  app.use("/api", (req, res, next) => {
+  app2.use((0, import_compression.default)());
+  app2.use(import_express.default.json({ limit: "10mb" }));
+  app2.use(import_express.default.urlencoded({ extended: true, limit: "10mb" }));
+  app2.use("/api", (req, res, next) => {
     next();
   });
-  app.post("/api/auth/login", async (req, res) => {
+  app2.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
       if (!username || !password) {
@@ -480,7 +435,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/auth/register", async (req, res) => {
+  app2.post("/api/auth/register", async (req, res) => {
     try {
       const { name, mobile, classVal, rollNumber, batchYear, password } = req.body;
       if (!name || !mobile || !classVal || !rollNumber || !password) {
@@ -508,7 +463,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/ranks/recalculate", async (req, res) => {
+  app2.post("/api/ranks/recalculate", async (req, res) => {
     try {
       await computeStats();
       await logActivity("admin", "Principal Admin", "admin", "Triggered calculation");
@@ -517,7 +472,7 @@ async function startServer() {
       res.status(500).json({ error: "Failed" });
     }
   });
-  app.get("/api/db", async (req, res) => {
+  app2.get("/api/db", async (req, res) => {
     try {
       const resStud = await getStudents();
       const resTests = await getTests();
@@ -541,7 +496,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/students", async (req, res) => {
+  app2.post("/api/students", async (req, res) => {
     try {
       const { name, mobile, classVal, rollNumber, batchYear, password } = req.body;
       const sId = await generateStudentID();
@@ -566,7 +521,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.put("/api/students/:id", async (req, res) => {
+  app2.put("/api/students/:id", async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -579,7 +534,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.delete("/api/students/:id", async (req, res) => {
+  app2.delete("/api/students/:id", async (req, res) => {
     try {
       const { id } = req.params;
       await deleteAttemptsByStudentId(id);
@@ -590,7 +545,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/students/:id/approve", async (req, res) => {
+  app2.post("/api/students/:id/approve", async (req, res) => {
     try {
       const sId = await generateStudentID();
       const updated = await updateStudent(req.params.id, { status: "Approved", studentId: sId });
@@ -602,7 +557,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/students/:id/reject", async (req, res) => {
+  app2.post("/api/students/:id/reject", async (req, res) => {
     try {
       const updated = await updateStudent(req.params.id, { status: "Rejected" });
       res.json({ success: true, student: updated });
@@ -610,7 +565,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/students/:id/reset-password", async (req, res) => {
+  app2.post("/api/students/:id/reset-password", async (req, res) => {
     try {
       const s = await updateStudent(req.params.id, { password: req.body.newPassword });
       if (s) await triggerNotification("Password Reset", "Admin reset pwd", "system", s.studentId);
@@ -619,7 +574,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.put("/api/admin/change-password", async (req, res) => {
+  app2.put("/api/admin/change-password", async (req, res) => {
     try {
       const ADMIN_PASSWORD = await getAdminPassword();
       if (req.body.currentPassword !== ADMIN_PASSWORD) return res.status(400).json({ error: "Incorrect" });
@@ -629,7 +584,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/students/:id/toggle-block", async (req, res) => {
+  app2.post("/api/students/:id/toggle-block", async (req, res) => {
     try {
       const s = await getStudentById(req.params.id);
       if (!s) return res.status(404).json({ error: "Not found" });
@@ -639,7 +594,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/tests", async (req, res) => {
+  app2.post("/api/tests", async (req, res) => {
     try {
       const { title, type, classVal, subject, date, startTime, endTime, duration, pdfName, pdfData, questionImages, answerKey } = req.body;
       let d = duration ? parseInt(duration, 10) : 60;
@@ -670,7 +625,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.put("/api/tests/:id", async (req, res) => {
+  app2.put("/api/tests/:id", async (req, res) => {
     try {
       const ud = { ...req.body };
       if (ud.type === "live" && ud.startTime && ud.endTime) {
@@ -682,7 +637,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.delete("/api/tests/:id", async (req, res) => {
+  app2.delete("/api/tests/:id", async (req, res) => {
     try {
       await deleteAttemptsByTestId(req.params.id);
       await deleteTest(req.params.id);
@@ -691,7 +646,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/tests/:id/upload-pdf", async (req, res) => {
+  app2.post("/api/tests/:id/upload-pdf", async (req, res) => {
     try {
       await updateTest(req.params.id, { pdfName: req.body.pdfName, pdfData: req.body.pdfData });
       res.json({ success: true });
@@ -699,7 +654,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/attempts", async (req, res) => {
+  app2.post("/api/attempts", async (req, res) => {
     try {
       const { testId, studentId, studentName, answers, status } = req.body;
       const test = await getTestById(testId);
@@ -754,7 +709,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/ai/chat", async (req, res) => {
+  app2.post("/api/ai/chat", async (req, res) => {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.0-flash",
@@ -765,7 +720,7 @@ async function startServer() {
       res.status(500).json({ error: "AI Error" });
     }
   });
-  app.post("/api/notifications/mark-read", async (req, res) => {
+  app2.post("/api/notifications/mark-read", async (req, res) => {
     try {
       await markNotificationsRead(req.body.studentId);
       res.json({ success: true });
@@ -773,7 +728,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/notifications", async (req, res) => {
+  app2.post("/api/notifications", async (req, res) => {
     try {
       await triggerNotification(req.body.title, req.body.message, req.body.type || "announcement", req.body.recipientId || "all");
       res.json({ success: true });
@@ -781,7 +736,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/gemini/chat", async (req, res) => {
+  app2.post("/api/gemini/chat", async (req, res) => {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.0-flash",
@@ -792,7 +747,7 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.post("/api/gemini/explain", async (req, res) => {
+  app2.post("/api/gemini/explain", async (req, res) => {
     try {
       let parts = [];
       if (req.body.imageBase64) parts.push({ inlineData: { data: req.body.imageBase64, mimeType: req.body.mimeType || "image/png" } });
@@ -806,19 +761,19 @@ async function startServer() {
       res.status(500).json({ error: e.message });
     }
   });
-  app.use("/api/*", (req, res) => {
+  app2.use("/api/*", (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
   });
   if (process.env.NODE_ENV !== "production") {
     console.log("Setting up Vite middleware for full-stack integration...");
     const vite = await (0, import_vite.createServer)({ server: { middlewareMode: true }, appType: "spa" });
-    app.use(vite.middlewares);
+    app2.use(vite.middlewares);
   } else {
-    const distPath = import_path.default.join(process.cwd(), "dist");
-    app.use(import_express.default.static(distPath));
-    app.get("*", (req, res) => res.sendFile(import_path.default.join(distPath, "index.html")));
+    const distPath = import_path2.default.join(process.cwd(), "dist");
+    app2.use(import_express.default.static(distPath));
+    app2.get("*", (req, res) => res.sendFile(import_path2.default.join(distPath, "index.html")));
   }
-  app.listen(PORT, "0.0.0.0", () => {
+  app2.listen(PORT, "0.0.0.0", () => {
     console.log(`Server fully running at http://localhost:${PORT}`);
   });
 }

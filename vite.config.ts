@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(() => {
   return {
     define: {
-      'import.meta.env.VITE_API_BASE': JSON.stringify(process.env.APP_URL || '')
+      'import.meta.env.VITE_API_BASE': JSON.stringify(process.env.APP_URL || 'https://ais-pre-2gbdiemrqbqhx6efzwgpgf-978163732318.asia-southeast1.run.app')
     },
     plugins: [
       react(), 
@@ -17,7 +17,22 @@ export default defineConfig(() => {
         injectRegister: 'inline',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
-          navigateFallback: '/index.html'
+          navigateFallback: '/index.html',
+          runtimeCaching: [
+            {
+              urlPattern: /\/api\/attempts/,
+              handler: 'NetworkOnly',
+              method: 'POST',
+              options: {
+                backgroundSync: {
+                  name: 'attempts-sync-queue',
+                  options: {
+                    maxRetentionTime: 24 * 60 // 24 hours in minutes
+                  }
+                }
+              }
+            }
+          ]
         },
         manifest: {
           id: '/?source=pwa',

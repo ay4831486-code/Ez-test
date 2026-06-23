@@ -7,7 +7,7 @@ import { useAppContext } from '../../AppContext';
 import EzTestIcon from '../common/EzTestIcon';
 
 export default function HomeTab() {
-  const { userType, setUserType, currUser, setCurrUser, db, setDb, activeTab, setActiveTab, adminSubTab, setAdminSubTab, searchQuery, setSearchQuery, dbLoading, setDbLoading, errorMessage, setErrorMessage, loginUsername, setLoginUsername, loginPassword, setLoginPassword, authTab, setAuthTab, regName, setRegName, regMobile, setRegMobile, regClass, setRegClass, regBatch, setRegBatch, regRoll, setRegRoll, regPassword, setRegPassword, regSuccessMsg, setRegSuccessMsg, activeExam, setActiveExam, examAnswers, setExamAnswers, examTimer, setExamTimer, timerRef, showBottomTabs, setShowBottomTabs, mainTouchStartPos, handleMainTouchStart, handleMainTouchEnd, doubtOpen, setDoubtOpen, mobileMenuOpen, setMobileMenuOpen, examMobileTab, setExamMobileTab, showCreateTest, setShowCreateTest, testFormTitle, setTestFormTitle, testFormType, setTestFormType, testFormClass, setTestFormClass, testFormSubject, setTestFormSubject, testFormDate, setTestFormDate, testFormStart, setTestFormStart, testFormEnd, setTestFormEnd, testFormDuration, setTestFormDuration, testFormNumQuestions, setTestFormNumQuestions, testFormKeys, setTestFormKeys, testFormPdfName, setTestFormPdfName, testFormPdfData, setTestFormPdfData, testFormImages, setTestFormImages, getSubjectsForClass, selectedStudent, setSelectedStudent, selectedAnalysis, setSelectedAnalysis, showDirectAddStudent, setShowDirectAddStudent, showDemoCreds, setShowDemoCreds, syncDB, syncOfflineAttempts, handleLoginSubmit, handleRegisterSubmit, handleApproveStudent, handleRejectStudent, handleToggleBlock, handleResetPassword, handleDeleteStudent, handleDirectAddStudent, handleCreateTestSubmit, handleDeleteTest, startExamSession, handleSelectOption, handleClearOption, handleManualSubmit, handleAutoSubmit, handleRecalculateRanks, handleMarkAllRead, handleLogout, renderMiniChart, secondsToHms, getLiveTestState, setIsAiChatOpen } = useAppContext();
+  const { userType, setUserType, currUser, setCurrUser, db, setDb, activeTab, setActiveTab, adminSubTab, setAdminSubTab, searchQuery, setSearchQuery, dbLoading, setDbLoading, errorMessage, setErrorMessage, loginUsername, setLoginUsername, loginPassword, setLoginPassword, authTab, setAuthTab, regName, setRegName, regMobile, setRegMobile, regClass, setRegClass, regBatch, setRegBatch, regRoll, setRegRoll, regPassword, setRegPassword, regSuccessMsg, setRegSuccessMsg, activeExam, setActiveExam, examAnswers, setExamAnswers, examTimer, setExamTimer, timerRef, showBottomTabs, setShowBottomTabs, mainTouchStartPos, handleMainTouchStart, handleMainTouchEnd, doubtOpen, setDoubtOpen, mobileMenuOpen, setMobileMenuOpen, examMobileTab, setExamMobileTab, showCreateTest, setShowCreateTest, testFormTitle, setTestFormTitle, testFormType, setTestFormType, testFormClass, setTestFormClass, testFormSubject, setTestFormSubject, testFormDate, setTestFormDate, testFormStart, setTestFormStart, testFormEnd, setTestFormEnd, testFormDuration, setTestFormDuration, testFormNumQuestions, setTestFormNumQuestions, testFormKeys, setTestFormKeys, testFormPdfName, setTestFormPdfName, testFormPdfData, setTestFormPdfData, testFormImages, setTestFormImages, getSubjectsForClass, selectedStudent, setSelectedStudent, selectedAnalysis, setSelectedAnalysis, showDirectAddStudent, setShowDirectAddStudent, showDemoCreds, setShowDemoCreds, syncDB, syncOfflineAttempts, handleLoginSubmit, handleRegisterSubmit, handleApproveStudent, handleRejectStudent, handleToggleBlock, handleResetPassword, handleDeleteStudent, handleDirectAddStudent, handleCreateTestSubmit, handleDeleteTest, startExamSession, handleSelectOption, handleClearOption, handleManualSubmit, handleAutoSubmit, handleRecalculateRanks, handleMarkAllRead, handleLogout, renderMiniChart, secondsToHms, getLiveTestState, setIsAiChatOpen, isOffline, lastSyncTime } = useAppContext();
   const [selectedClassFilter, setSelectedClassFilter] = React.useState<string>('All');
   const [topPerformersClassFilter, setTopPerformersClassFilter] = React.useState<string>('All');
   const [homeLeaderboardMode, setHomeLeaderboardMode] = React.useState<'live' | 'practice'>('live');
@@ -41,7 +41,25 @@ export default function HomeTab() {
                     STUDENT HOME COMPONENT
                    =================================== */}
                 {userType === 'student' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="space-y-6">
+                    {isOffline && (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 bg-amber-500/10 border border-amber-500/20 rounded-3xl text-slate-700 text-xs shadow-xs animate-fade-in">
+                        <div className="flex gap-2.5 items-start sm:items-center">
+                          <div className="p-1.5 bg-amber-500/15 border border-amber-500/30 text-amber-600 rounded-lg shrink-0">
+                            <ShieldAlert className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-800">Connection Offline:</span> EZ TEST is operating in cached connection-saver mode. You can view your previous performance curves, scoring milestones, and solve practice tests even offline.
+                          </div>
+                        </div>
+                        {lastSyncTime && (
+                          <span className="font-mono text-[10px] bg-amber-500/15 border border-amber-500/35 text-amber-900 px-2 py-0.5 rounded-lg shrink-0">
+                            Last Synced: {lastSyncTime}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left 2 column bento metric block */}
                     <div className="lg:col-span-2 space-y-6">
                       
@@ -117,12 +135,22 @@ export default function HomeTab() {
 
                       {/* Performance Trend chart */}
                       <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm text-slate-800">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                           <div className="flex items-center gap-2">
                             <LineChart className="h-4 w-4 text-indigo-600" />
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Progress Curve (Scores out of 10)</h4>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono font-semibold">Real-time stats sync</span>
+                          {isOffline ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-150 text-[10px] text-amber-700 font-mono font-bold animate-pulse">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                              Offline (Cached {lastSyncTime || 'Recently'})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-150 text-[10px] text-emerald-700 font-mono font-bold">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Synced Live
+                            </span>
+                          )}
                         </div>
                         {renderMiniChart(db.attempts.filter(a => a.studentId === currUser.studentId && a.status === 'submitted'))}
                       </div>
@@ -368,7 +396,8 @@ export default function HomeTab() {
                       })()}
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
                 {/* ===================================
                     ADMIN HOME COMPONENT (staff metrics monitor)

@@ -15,14 +15,13 @@ Object.defineProperty(window, 'fetch', {
     let options = args[1] || {};
 
     if (typeof url === 'string' && url.startsWith('/api/')) {
-      if (Capacitor.isNativePlatform()) {
-        // Since you are testing on Android directly without a PC, the app needs to connect to the live backend.
-         const apiBase = (import.meta as any).env.VITE_API_BASE || 'https://ais-pre-2gbdiemrqbqhx6efzwgpgf-978163732318.asia-southeast1.run.app';
-         url = apiBase + url;
+      const apiBase = import.meta.env.VITE_API_BASE || '';
+      if (apiBase) {
+        url = apiBase + url;
       }
 
       // Inject publishable key to make app securely self-dependent
-      const pubKey = (import.meta as any).env.VITE_APP_PUBLISHABLE_KEY;
+      const pubKey = import.meta.env.VITE_APP_PUBLISHABLE_KEY;
       if (pubKey) {
         options.headers = {
           ...options.headers,

@@ -55,7 +55,7 @@ jobs:
           java-version: '21'
 
       - name: Restore Pristine Gradle Wrapper JAR
-        run: node scripts/download-wrapper.cjs
+        run: node src/scripts/download-wrapper.cjs
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew

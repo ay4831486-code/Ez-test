@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { DatabaseState, Test, Student, Attempt } from '../types';
 import { saveOfflineAttempt, getOfflineAttempts, clearOfflineAttempt } from '../offlineSync';
@@ -19,13 +18,45 @@ export function useAppLogic() {
     });
   
     // Database synchronizer
-    const [db, setDb] = useState<DatabaseState>({
-      students: [],
-      tests: [],
-      attempts: [],
-      notifications: [],
-      activities: []
+    const [db, setDb] = useState<DatabaseState>(() => {
+      const saved = localStorage.getItem('ez_db_cache');
+      try {
+        return saved ? JSON.parse(saved) : {
+          students: [],
+          tests: [],
+          attempts: [],
+          notifications: [],
+          activities: []
+        };
+      } catch {
+        return {
+          students: [],
+          tests: [],
+          attempts: [],
+          notifications: [],
+          activities: []
+        };
+      }
     });
+
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
+    const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => {
+      return localStorage.getItem('ez_db_cache_time');
+    });
+
+    useEffect(() => {
+      const handleOnline = () => {
+        setIsOffline(false);
+        syncDB();
+      };
+      const handleOffline = () => setIsOffline(true);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }, []);
   
     // UI state
     const [activeTab, setActiveTab] = useState<string>(() => {
@@ -199,14 +230,34 @@ export function useAppLogic() {
           if (contentType && contentType.indexOf("application/json") !== -1) {
             const data = await response.json();
             setDb(data);
+            try {
+              localStorage.setItem('ez_db_cache', JSON.stringify(data));
+              const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              localStorage.setItem('ez_db_cache_time', nowStr);
+              setLastSyncTime(nowStr);
+            } catch (err) {
+              console.warn("Failed to write to db cache:", err);
+            }
           } else {
             // Platform loading screen may return 200 OK with HTML when server is waking up
             console.warn("Expected JSON, got HTML. Skipping sync.");
           }
+        } else {
+          throw new Error('Server returned non-ok status');
         }
       } catch (err: any) {
         if (err.message !== 'Failed to fetch') {
           console.error("Failed to sync database", err);
+        }
+        // Load fallback cache if fetch failed or we are offline
+        try {
+          const cached = localStorage.getItem('ez_db_cache');
+          if (cached) {
+            const data = JSON.parse(cached);
+            setDb(data);
+          }
+        } catch (e) {
+          console.error("Failed to load offline cache", e);
         }
       } finally {
         setDbLoading(false);
@@ -216,7 +267,7 @@ export function useAppLogic() {
     useEffect(() => {
       syncDB();
       const interval = setInterval(syncDB, 15000); // synchronize database every 15s
-
+  
       // Silent login ping to increment daily streak if local storage persists
       if (userType === 'student' && currUser && currUser.studentId && currUser.password) {
         fetch("/api/auth/login", {
@@ -230,7 +281,7 @@ export function useAppLogic() {
         })
         .catch(() => {});
       }
-
+  
       return () => clearInterval(interval);
     }, []);
   
@@ -309,7 +360,7 @@ export function useAppLogic() {
         if (timerRef.current) clearInterval(timerRef.current);
       };
     }, [activeExam]);
-
+  
     // Background sync feature to auto-save OMR selections to localStorage every 30 seconds
     useEffect(() => {
       if (!activeExam) return;
@@ -325,51 +376,51 @@ export function useAppLogic() {
       try {
         localStorage.setItem(`ez_omr_backup_${activeExam.id}`, JSON.stringify(examAnswers));
       } catch (e) {}
-
+  
       return () => clearInterval(backupInterval);
     }, [activeExam, examAnswers]);
   
     // Web Notification scheduler for upcoming exams
-  useEffect(() => {
-    if (!currUser || userType !== 'student' || !('Notification' in window)) return;
-
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
-    let notifiedExamIds: string[] = [];
-    try {
-      const saved = localStorage.getItem('notified_exam_ids');
-      if (saved) notifiedExamIds = JSON.parse(saved);
-    } catch {
-      // Ignored
-    }
-
-    const checkUpcomingExams = () => {
-      if (Notification.permission !== 'granted') return;
-      
-      const now = new Date();
-      const upcomingExams = db.tests.filter((test) => {
-        if (test.classVal !== currUser.classVal && test.classVal !== 'All' && test.classVal !== 'all') {
-          return false;
-        }
-
-        if (test.type !== 'live') return false;
+    useEffect(() => {
+      if (!currUser || userType !== 'student' || !('Notification' in window)) return;
+  
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+  
+      let notifiedExamIds: string[] = [];
+      try {
+        const saved = localStorage.getItem('notified_exam_ids');
+        if (saved) notifiedExamIds = JSON.parse(saved);
+      } catch {
+        // Ignored
+      }
+  
+      const checkUpcomingExams = () => {
+        if (Notification.permission !== 'granted') return;
         
-        if (!test.startTime || !test.date) return false;
-        
-        const startTime = new Date(`${test.date}T${test.startTime}:00`);
-        const timeDiffMs = startTime.getTime() - now.getTime();
-        const diffMinutes = timeDiffMs / 60000;
-        
-        // Between 0 and 15 minutes
-        return diffMinutes > 0 && diffMinutes <= 15 && !notifiedExamIds.includes(test.id);
-      });
-
-      if (upcomingExams.length > 0) {
-        upcomingExams.forEach(exam => {
-          new Notification('Upcoming Exam Reminder!', {
-            body: `Your live exam "${exam.title}" will start in ${Math.round((new Date(`${exam.date}T${exam.startTime}:00`).getTime() - now.getTime()) / 60000)} minutes!`,
+        const now = new Date();
+        const upcomingExams = db.tests.filter((test) => {
+          if (test.classVal !== currUser.classVal && test.classVal !== 'All' && test.classVal !== 'all') {
+            return false;
+          }
+  
+          if (test.type !== 'live') return false;
+          
+          if (!test.startTime || !test.date) return false;
+          
+          const startTime = new Date(`${test.date}T${test.startTime}:00`);
+          const timeDiffMs = startTime.getTime() - now.getTime();
+          const diffMinutes = timeDiffMs / 60000;
+          
+          // Between 0 and 15 minutes
+          return diffMinutes > 0 && diffMinutes <= 15 && !notifiedExamIds.includes(test.id);
+        });
+  
+        if (upcomingExams.length > 0) {
+          upcomingExams.forEach(exam => {
+            new Notification('Upcoming Exam Reminder!', {
+              body: `Your live exam "${exam.title}" will start in ${Math.round((new Date(`${exam.date}T${exam.startTime}:00`).getTime() - now.getTime()) / 60000)} minutes!`,
           });
           notifiedExamIds.push(exam.id);
         });
@@ -578,7 +629,7 @@ export function useAppLogic() {
       let calculatedStart = "";
       let calculatedEnd = "";
       let derivedDuration = parseInt(testFormDuration) || 60;
-
+  
       if (testFormType === 'live') {
         if (!testFormDate || !testFormStart || !testFormEnd) {
           alert("Live testing timings date, start and end coordinates are required.");
@@ -646,14 +697,14 @@ export function useAppLogic() {
       // Double check availability
       if (test.type === 'live') {
         const now = new Date().getTime();
-        const st = new Date(test.startTime).getTime();
-        const et = new Date(test.endTime).getTime();
+        const start = new Date(test.startTime).getTime();
+        const end = new Date(test.endTime).getTime();
         
-        if (now < st) {
+        if (now < start) {
           alert(`This live exam scheduled is currently locked. It will trigger precisely at ${new Date(test.startTime).toLocaleTimeString()}`);
           return;
         }
-        if (now > et) {
+        if (now > end) {
           alert("This live exam windows has already elapsed and closed.");
           return;
         }
@@ -723,7 +774,7 @@ export function useAppLogic() {
               }
             }
           } catch (e) {}
-
+  
           setExamAnswers(mergedAnswers || {});
           setExamTimer(finalTimer);
           setActiveExam(test);
@@ -833,6 +884,7 @@ export function useAppLogic() {
           alert("Submission completed with warnings. Synchronizing database.");
           setActiveExam(null);
           syncDB();
+          setActiveTab('home');
         }
       } catch (err) {
         console.error(err);
@@ -984,10 +1036,9 @@ export function useAppLogic() {
       }
     };
   
-  
-  
   return {
     userType, setUserType, currUser, setCurrUser, db, setDb, activeTab, setActiveTab, adminSubTab, setAdminSubTab, searchQuery, setSearchQuery, dbLoading, setDbLoading, errorMessage, setErrorMessage, loginUsername, setLoginUsername, loginPassword, setLoginPassword, authTab, setAuthTab, regName, setRegName, regMobile, setRegMobile, regClass, setRegClass, regBatch, setRegBatch, regRoll, setRegRoll, regPassword, setRegPassword, regSuccessMsg, setRegSuccessMsg, activeExam, setActiveExam, examAnswers, setExamAnswers, examTimer, setExamTimer, timerRef, showBottomTabs, setShowBottomTabs, mainTouchStartPos, handleMainTouchStart, handleMainTouchEnd, doubtOpen, setDoubtOpen, mobileMenuOpen, setMobileMenuOpen, examMobileTab, setExamMobileTab, showCreateTest, setShowCreateTest, testFormTitle, setTestFormTitle, testFormType, setTestFormType, testFormClass, setTestFormClass, testFormSubject, setTestFormSubject, testFormDate, setTestFormDate, testFormStart, setTestFormStart, testFormEnd, setTestFormEnd, testFormDuration, setTestFormDuration, testFormNumQuestions, setTestFormNumQuestions, testFormKeys, setTestFormKeys, testFormPdfName, setTestFormPdfName, testFormPdfData, setTestFormPdfData, testFormImages, setTestFormImages, getSubjectsForClass, selectedStudent, setSelectedStudent, selectedAnalysis, setSelectedAnalysis, showDirectAddStudent, setShowDirectAddStudent, showDemoCreds, setShowDemoCreds, syncDB, syncOfflineAttempts, handleLoginSubmit, handleRegisterSubmit, handleApproveStudent, handleRejectStudent, handleToggleBlock, handleResetPassword, handleDeleteStudent, handleDirectAddStudent, handleCreateTestSubmit, handleDeleteTest, startExamSession, handleSelectOption, handleClearOption, handleManualSubmit, handleAutoSubmit, handleRecalculateRanks, handleMarkAllRead, handleLogout, renderMiniChart, secondsToHms, getLiveTestState,
-    showCelebration, setShowCelebration, celebrationData, setCelebrationData, isAiChatOpen, setIsAiChatOpen
+    showCelebration, setShowCelebration, celebrationData, setCelebrationData, isAiChatOpen, setIsAiChatOpen,
+    isOffline, lastSyncTime
   };
 }
